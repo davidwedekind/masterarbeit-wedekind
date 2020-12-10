@@ -1,0 +1,2 @@
+streets_file_path = 'C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/01_prep/04_BikeTeleportation/relevant_links_for_random_point_search.shp'
+ors_credentials = {'key': '5b3ce3597851110001cf62480cfb3b2745614b05ac308c910355995a'}
