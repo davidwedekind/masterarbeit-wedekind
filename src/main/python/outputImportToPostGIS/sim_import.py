@@ -5,7 +5,7 @@ import click
 import pandas as pd
 import geopandas as gpd
 import logging
-from utils import load_df_to_database, load_db_parameters
+from outputImportToPostGIS.utils import load_df_to_database, load_db_parameters
 import xml.etree.ElementTree as ET
 from shapely.geometry.linestring import LineString
 import psycopg2 as pg
@@ -243,6 +243,7 @@ def update_views(db_parameter):
     """
 
     views = ['matsim_output.distanzklassen',
+             'matsim_output.distanzklassen_inv',
              'matsim_output.modal_split',
              'matsim_output.nutzersegmente',
              'matsim_output.kreis_relationen',

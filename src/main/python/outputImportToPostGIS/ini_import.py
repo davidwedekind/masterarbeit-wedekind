@@ -10,8 +10,8 @@ from shapely import geometry
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.point import Point
-from utils import load_df_to_database, load_db_parameters, drop_table_if_exists, run_sql_script
-from sim_import import update_views
+from outputImportToPostGIS.utils import load_df_to_database, load_db_parameters, drop_table_if_exists, run_sql_script
+from outputImportToPostGIS.sim_import import update_views
 
 @click.group()
 def cli():
@@ -265,10 +265,12 @@ def import_calib(ctx, calib, db_parameter):
     logging.info("Read-in excel file...")
     tables = dict()
     tables['calib_distanzklassen'] = pd.read_excel(calib, sheet_name='01_Distanzklassen_Tidy')
+    tables['calib_distanzklassen_inv'] = pd.read_excel(calib, sheet_name='01_Distanzklassen_inv_Tidy')
     tables['calib_wege'] = pd.read_excel(calib, sheet_name='02_Wege_Tidy')
     tables['calib_modal_split'] = pd.read_excel(calib, sheet_name='03_ModalSplit_Tidy')
     tables['calib_nutzersegmente'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente', skipfooter=7)
     tables['calib_oev_segmente'] = pd.read_excel(calib, sheet_name='05_ÖVSegmente', skipfooter=8)
+    tables['calib_small_area_kreise'] = pd.read_excel(calib, sheet_name='06_ModalSplitSA', dtype={'ags': str})
 
     for df in tables.values():
         df.columns = df.columns.map(str.lower)
@@ -276,6 +278,13 @@ def import_calib(ctx, calib, db_parameter):
     # -- META DATA --
     DATA_METADATA = {'calib_distanzklassen': {
         'title': 'Distanzklassen',
+        'description': 'Tabelle A W12 Wegelänge - Stadt Stuttgart',
+        'source_name': 'Tabellarische Grundausertung Stadt Stuttgart. MID 2017',
+        'source_url': 'https://vm.baden-wuerttemberg.de/fileadmin/redaktion/m-mvi/intern/Dateien/PDF/MID2017_Stadt_Stuttgart.pdf',
+        'source_year': '2018',
+        'source_download_date': '2020-11-20'
+    },'calib_distanzklassen_inv': {
+        'title': 'Distanzklassen (invertiert)',
         'description': 'Tabelle A W12 Wegelänge - Stadt Stuttgart',
         'source_name': 'Tabellarische Grundausertung Stadt Stuttgart. MID 2017',
         'source_url': 'https://vm.baden-wuerttemberg.de/fileadmin/redaktion/m-mvi/intern/Dateien/PDF/MID2017_Stadt_Stuttgart.pdf',
@@ -309,7 +318,13 @@ def import_calib(ctx, calib, db_parameter):
         'source_url': 'https://www.vvs.de/download/Zahlen-Daten-Fakten-2019.pdf',
         'source_year': '2020',
         'source_download_date': '2020-11-20'
-    }
+    }, 'calib_small_area_kreise': {
+            'title': 'Modal-Split pro Kreis',
+            'description': 'Modal-Split pro Kreis nach Small Area Verfahren',
+            'source_name': 'MiD',
+            'source_url': 'http://www.mobilitaet-in-deutschland.de/pdf/MiD2017_Small_Area_Schaetzung_IVT.pdf',
+            'source_year': '2017',
+            'source_download_date': '2020-12-13'}
     }
 
     # -- IMPORT --
