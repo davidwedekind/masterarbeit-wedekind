@@ -65,7 +65,7 @@
         </dependency>
 
 
-        <dependency>
+        <!--dependency>
             <groupId>com.github.matsim-scenarios</groupId>
             <artifactId>matsim-stuttgart</artifactId>
             <version></version>
@@ -75,7 +75,7 @@
                     <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
+        </dependency>-->
 
 
         <dependency>
