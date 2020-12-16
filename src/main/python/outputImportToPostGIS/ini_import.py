@@ -264,10 +264,11 @@ def import_calib(ctx, calib, db_parameter):
     # -- PRE-CALCULATIONS --
     logging.info("Read-in excel file...")
     tables = dict()
-    tables['calib_distanzklassen'] = pd.read_excel(calib, sheet_name='01_Distanzklassen_Tidy')
-    tables['calib_distanzklassen_inv'] = pd.read_excel(calib, sheet_name='01_Distanzklassen_inv_Tidy')
+    tables['calib_distanzklassen'] = pd.read_excel(calib, sheet_name='01_Distanzklassen_Tidy', usecols='D:I')
+    tables['calib_distanzklassen_inv'] = pd.read_excel(calib, sheet_name='01_Distanzklassen_inv_Tidy', usecols='D:I')
     tables['calib_wege'] = pd.read_excel(calib, sheet_name='02_Wege_Tidy')
     tables['calib_modal_split'] = pd.read_excel(calib, sheet_name='03_ModalSplit_Tidy')
+    tables['calib_wege_abs'] = pd.read_excel(calib, sheet_name='07_AbsoluteNoTrips')
     tables['calib_nutzersegmente'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente', skipfooter=7)
     tables['calib_oev_segmente'] = pd.read_excel(calib, sheet_name='05_ÖVSegmente', skipfooter=8)
     tables['calib_small_area_kreise'] = pd.read_excel(calib, sheet_name='06_ModalSplitSA', dtype={'ags': str})
@@ -293,6 +294,13 @@ def import_calib(ctx, calib, db_parameter):
     }, 'calib_wege': {
         'title': 'Wege',
         'description': 'Allgemeine Kennwerte und Verkehrsaufkommen nach regionalstatistischem Raumtyp (RegioSta R7)',
+        'source_name': 'infas. MID 2017',
+        'source_url': 'http://gecms.region-stuttgart.org/Download.aspx?id=104816',
+        'source_year': '2019',
+        'source_download_date': '2020-11-20'
+    }, 'calib_wege_abs': {
+        'title': 'Wege absolut',
+        'description': 'Wege absolut berechnet aus EW, durchschnittlicher Anzahl Wege und Modal Split',
         'source_name': 'infas. MID 2017',
         'source_url': 'http://gecms.region-stuttgart.org/Download.aspx?id=104816',
         'source_year': '2019',
