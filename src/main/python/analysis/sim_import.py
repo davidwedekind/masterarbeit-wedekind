@@ -5,7 +5,7 @@ import click
 import pandas as pd
 import geopandas as gpd
 import logging
-from outputImportToPostGIS.utils import load_df_to_database, load_db_parameters
+from analysis.utils import load_df_to_database, load_db_parameters
 import xml.etree.ElementTree as ET
 from shapely.geometry.linestring import LineString
 import psycopg2 as pg

@@ -10,8 +10,8 @@ from shapely import geometry
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.point import Point
-from outputImportToPostGIS.utils import load_df_to_database, load_db_parameters, drop_table_if_exists, run_sql_script
-from outputImportToPostGIS.sim_import import update_views
+from analysis.utils import load_df_to_database, load_db_parameters, drop_table_if_exists, run_sql_script
+from analysis.sim_import import update_views
 
 @click.group()
 def cli():
@@ -161,7 +161,7 @@ def import_gem(ctx, gem, regiosta, db_parameter):
 
     # -- IMPORT --
     table_name = 'gemeinden'
-    table_schema = 'general'
+    table_schema = 'raw'
     db_parameter = load_db_parameters(db_parameter)
     drop_table_if_exists(db_parameter, table_name, table_schema)
 
@@ -217,7 +217,7 @@ def import_kreise(ctx, kreise, db_parameter):
 
     # -- IMPORT --
     table_name = 'kreise'
-    table_schema = 'general'
+    table_schema = 'raw'
     db_parameter = load_db_parameters(db_parameter)
     drop_table_if_exists(db_parameter, table_name, table_schema)
 
@@ -264,82 +264,58 @@ def import_calib(ctx, calib, db_parameter):
     # -- PRE-CALCULATIONS --
     logging.info("Read-in excel file...")
     tables = dict()
-    tables['calib_distanzklassen'] = pd.read_excel(calib, sheet_name='01_Distanzklassen_Tidy', usecols='D:I')
-    tables['calib_distanzklassen_inv'] = pd.read_excel(calib, sheet_name='01_Distanzklassen_inv_Tidy', usecols='D:I')
-    tables['calib_wege'] = pd.read_excel(calib, sheet_name='02_Wege_Tidy')
-    tables['calib_modal_split'] = pd.read_excel(calib, sheet_name='03_ModalSplit_Tidy')
-    tables['calib_wege_abs'] = pd.read_excel(calib, sheet_name='07_AbsoluteNoTrips')
-    tables['calib_nutzersegmente'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente', skipfooter=7)
-    tables['calib_oev_segmente'] = pd.read_excel(calib, sheet_name='05_ÖVSegmente', skipfooter=8)
-    tables['calib_small_area_kreise'] = pd.read_excel(calib, sheet_name='06_ModalSplitSA', dtype={'ags': str})
+    tables['cal_ms_by_mode_dist_stuttgart'] = pd.read_excel(calib, sheet_name='01a_Klassen_Tidy')
+    tables['cal_ms_by_dist_stuttgart'] = pd.read_excel(calib, sheet_name='01b_Klassen_Tidy')
+    tables['cal_kennwerte_metropolregion'] = pd.read_excel(calib, sheet_name='02_Wege_Tidy')
+    tables['cal_ms_metropolregion'] = pd.read_excel(calib, sheet_name='03_ModalSplit_Tidy')
+    tables['cal_n_segmente_metropolregion'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente_Tidy')
 
     for df in tables.values():
         df.columns = df.columns.map(str.lower)
 
     # -- META DATA --
-    DATA_METADATA = {'calib_distanzklassen': {
+    DATA_METADATA = {'cal_ms_klassen_stuttgart': {
+        'title': 'Klassen',
+        'description': 'Tabelle A W12 Wegelänge - Stadt Stuttgart',
+        'source_name': 'Tabellarische Grundausertung Stadt Stuttgart. MID 2017',
+        'source_url': 'https://vm.baden-wuerttemberg.de/fileadmin/redaktion/m-mvi/intern/Dateien/PDF/MID2017_Stadt_Stuttgart.pdf',
+        'source_year': '2018',
+        'source_download_date': '2020-11-20'
+    },  'cal_ms_distanzklassen_stuttgart': {
         'title': 'Distanzklassen',
         'description': 'Tabelle A W12 Wegelänge - Stadt Stuttgart',
         'source_name': 'Tabellarische Grundausertung Stadt Stuttgart. MID 2017',
         'source_url': 'https://vm.baden-wuerttemberg.de/fileadmin/redaktion/m-mvi/intern/Dateien/PDF/MID2017_Stadt_Stuttgart.pdf',
         'source_year': '2018',
         'source_download_date': '2020-11-20'
-    },'calib_distanzklassen_inv': {
-        'title': 'Distanzklassen (invertiert)',
-        'description': 'Tabelle A W12 Wegelänge - Stadt Stuttgart',
-        'source_name': 'Tabellarische Grundausertung Stadt Stuttgart. MID 2017',
-        'source_url': 'https://vm.baden-wuerttemberg.de/fileadmin/redaktion/m-mvi/intern/Dateien/PDF/MID2017_Stadt_Stuttgart.pdf',
-        'source_year': '2018',
-        'source_download_date': '2020-11-20'
-    }, 'calib_wege': {
+    }, 'cal_kennwerte_metropolregion': {
         'title': 'Wege',
         'description': 'Allgemeine Kennwerte und Verkehrsaufkommen nach regionalstatistischem Raumtyp (RegioSta R7)',
         'source_name': 'infas. MID 2017',
         'source_url': 'http://gecms.region-stuttgart.org/Download.aspx?id=104816',
         'source_year': '2019',
         'source_download_date': '2020-11-20'
-    }, 'calib_wege_abs': {
-        'title': 'Wege absolut',
-        'description': 'Wege absolut berechnet aus EW, durchschnittlicher Anzahl Wege und Modal Split',
-        'source_name': 'infas. MID 2017',
-        'source_url': 'http://gecms.region-stuttgart.org/Download.aspx?id=104816',
-        'source_year': '2019',
-        'source_download_date': '2020-11-20'
-    }, 'calib_modal_split': {
+    }, 'cal_ms_metropolregion': {
         'title': 'Modal Split',
         'description': 'Allgemeine Kennwerte und Verkehrsaufkommen nach regionalstatistischem Raumtyp (RegioSta R7)',
         'source_name': 'infas. MID 2017',
         'source_url': 'http://gecms.region-stuttgart.org/Download.aspx?id=104816',
         'source_year': '2019',
         'source_download_date': '2020-11-20'
-    }, 'calib_nutzersegmente': {
+    }, 'cal_n_segmente_metropolregion': {
         'title': 'Nutzersegmente',
         'description': 'Allgemeine Kennwerte und Verkehrsaufkommen nach regionalstatistischem Raumtyp (RegioSta R7)',
         'source_name': 'infas. MID 2017',
         'source_url': 'http://gecms.region-stuttgart.org/Download.aspx?id=104816',
         'source_year': '2019',
         'source_download_date': '2020-11-20'
-    }, 'calib_oev_segmente': {
-        'title': 'Fahrtenanteile je Verkehrsmittel',
-        'description': 'Fahrtenanteile je Verkehrsmittel bis zum Ums',
-        'source_name': 'VVS',
-        'source_url': 'https://www.vvs.de/download/Zahlen-Daten-Fakten-2019.pdf',
-        'source_year': '2020',
-        'source_download_date': '2020-11-20'
-    }, 'calib_small_area_kreise': {
-            'title': 'Modal-Split pro Kreis',
-            'description': 'Modal-Split pro Kreis nach Small Area Verfahren',
-            'source_name': 'MiD',
-            'source_url': 'http://www.mobilitaet-in-deutschland.de/pdf/MiD2017_Small_Area_Schaetzung_IVT.pdf',
-            'source_year': '2017',
-            'source_download_date': '2020-12-13'}
-    }
+    }}
 
     # -- IMPORT --
     db_parameter = load_db_parameters(db_parameter)
 
     for key in tables:
-        table_schema = 'general'
+        table_schema = 'calib'
         drop_table_if_exists(db_parameter, key, table_schema)
         logging.info("Load data to database: " + key)
         load_df_to_database(
@@ -389,7 +365,7 @@ def import_areas(ctx, sim_area, reg_stuttgart, vvs_area, db_parameter):
 
     # -- IMPORT --
     table_name = 'areas'
-    table_schema = 'general'
+    table_schema = 'raw'
     db_parameter = load_db_parameters(db_parameter)
     drop_table_if_exists(db_parameter, table_name, table_schema)
 
@@ -448,7 +424,7 @@ def create_h3_tables(ctx, shape, db_parameter):
 
         # -- IMPORT --
         table_name = 'h3_res_' + str(res)
-        table_schema = 'general'
+        table_schema = 'raw'
         drop_table_if_exists(db_parameter, table_name, table_schema)
 
         DATA_METADATA = {

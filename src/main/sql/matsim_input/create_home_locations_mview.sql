@@ -5,6 +5,7 @@ CREATE MATERIALIZED VIEW matsim_input."agents_homes_with_raumdata" AS (
 			agent.person_id,
 			agent.geometry,
 			gem.ags,
+			LEFT(gem.ags, 5) as kreis_ags,
 			gem.gen,
 			gem.bez,
 			gem.regiostar7

@@ -12,7 +12,7 @@ CREATE MATERIALIZED VIEW matsim_output."distanzklassen" AS (
 		SELECT
 			run_name,
 			'LH Stuttgart' as area,
-			COUNT(person) no_trips,
+			COUNT(person) as no_trips,
 			c_main_mode,
 			CASE
 				WHEN traveled_distance between 0 AND 499 then 'unter_500m'
@@ -39,10 +39,11 @@ CREATE MATERIALIZED VIEW matsim_output."distanzklassen" AS (
 		FROM stuttgart_trips
 		GROUP BY run_name, c_main_mode, distance_group, distance_group_no
 	)
-			
+
 	SELECT
-		*,  ROUND((no_trips / SUM(no_trips) OVER (partition by run_name, distance_group))* 100, 1) AS mode_share
+		*,
+		ROUND((no_trips / SUM(no_trips) OVER (partition by run_name, c_main_mode))* 100, 1) AS mode_share
 	FROM groups
-	ORDER BY run_name, distance_group_no, c_main_mode
+	ORDER BY run_name, c_main_mode, distance_group_no
 	
 );
