@@ -11,19 +11,20 @@ from shapely.geometry.multipolygon import MultiPolygon
 from shapely.geometry.polygon import Polygon
 from shapely.geometry.point import Point
 from analysis.utils import load_df_to_database, load_db_parameters, drop_table_if_exists, run_sql_script
-from analysis.sim_import import update_views
+
+sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/calibration_views"))
+
 
 @click.group()
 def cli():
     pass
 
 
-
 @cli.command()
 @click.option('--plans', type=str, default='', help='plans path')
 @click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
 @click.pass_context
-def import_home_loc(ctx, plans, db_parameter):
+def import_agents(ctx, plans, db_parameter):
     """
     HOME LOCATIONS
     This is the function which can be executed for extracting the agents home locations from the plans file.
@@ -57,7 +58,7 @@ def import_home_loc(ctx, plans, db_parameter):
     gdf_agents = gdf_agents.set_crs(epsg=25832)
 
     # -- IMPORT --
-    table_name = 'agent_home_locations'
+    table_name = 'sim_agents_raw'
     table_schema = 'matsim_input'
     db_parameter = load_db_parameters(db_parameter)
     drop_table_if_exists(db_parameter, table_name, table_schema)
@@ -82,6 +83,14 @@ def import_home_loc(ctx, plans, db_parameter):
         geom_cols={'geometry': 'POINT'})
 
     logging.info("Home location import successful!")
+
+    # -- EXTENDED MVIEW FOR AGENTS --
+    logging.info('Create enriched mview for agents...')
+    logging.info('sql directory: ' + sql_dir)
+
+    query = sql_dir + '/agents_enriched_mview.sql'
+    run_sql_script(SQL_FILE_PATH=query, db_parameter=db_parameter)
+    logging.info("Successful mview creation!")
 
 
 @cli.command()
@@ -264,45 +273,45 @@ def import_calib(ctx, calib, db_parameter):
     # -- PRE-CALCULATIONS --
     logging.info("Read-in excel file...")
     tables = dict()
-    tables['cal_ms_by_mode_dist_stuttgart'] = pd.read_excel(calib, sheet_name='01a_Klassen_Tidy')
-    tables['cal_ms_by_dist_stuttgart'] = pd.read_excel(calib, sheet_name='01b_Klassen_Tidy')
-    tables['cal_kennwerte_metropolregion'] = pd.read_excel(calib, sheet_name='02_Wege_Tidy')
-    tables['cal_ms_metropolregion'] = pd.read_excel(calib, sheet_name='03_ModalSplit_Tidy')
-    tables['cal_n_segmente_metropolregion'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente_Tidy')
+    tables['mid_trip_stats_by_mode_distance_stuttgart'] = pd.read_excel(calib, sheet_name='01a_Klassen_Tidy')
+    tables['mid_trip_stats_by_distance_stuttgart'] = pd.read_excel(calib, sheet_name='01b_Klassen_Tidy')
+    tables['mid_other_param'] = pd.read_excel(calib, sheet_name='02_Wege_Tidy')
+    tables['mid_trip_stats_multiple_level'] = pd.read_excel(calib, sheet_name='03_ModalSplit_Tidy')
+    tables['mid_user_segments'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente_Tidy')
 
     for df in tables.values():
         df.columns = df.columns.map(str.lower)
 
     # -- META DATA --
-    DATA_METADATA = {'cal_ms_klassen_stuttgart': {
-        'title': 'Klassen',
+    DATA_METADATA = {'mid_trip_stats_by_mode_distance_stuttgart': {
+        'title': 'Modal-Split nach Mode und Distanzklassen für die Landeshaupstadt Stuttgart',
         'description': 'Tabelle A W12 Wegelänge - Stadt Stuttgart',
         'source_name': 'Tabellarische Grundausertung Stadt Stuttgart. MID 2017',
         'source_url': 'https://vm.baden-wuerttemberg.de/fileadmin/redaktion/m-mvi/intern/Dateien/PDF/MID2017_Stadt_Stuttgart.pdf',
         'source_year': '2018',
         'source_download_date': '2020-11-20'
-    },  'cal_ms_distanzklassen_stuttgart': {
-        'title': 'Distanzklassen',
+    },  'mid_trip_stats_by_distance_stuttgart': {
+        'title': 'Modal-Split nach Distanzklassen für die Landeshaupstadt Stuttgart',
         'description': 'Tabelle A W12 Wegelänge - Stadt Stuttgart',
         'source_name': 'Tabellarische Grundausertung Stadt Stuttgart. MID 2017',
         'source_url': 'https://vm.baden-wuerttemberg.de/fileadmin/redaktion/m-mvi/intern/Dateien/PDF/MID2017_Stadt_Stuttgart.pdf',
         'source_year': '2018',
         'source_download_date': '2020-11-20'
-    }, 'cal_kennwerte_metropolregion': {
-        'title': 'Wege',
+    }, 'mid_other_param': {
+        'title': 'Allgemeine Kennwerte und Verkehrsaufkommen',
         'description': 'Allgemeine Kennwerte und Verkehrsaufkommen nach regionalstatistischem Raumtyp (RegioSta R7)',
         'source_name': 'infas. MID 2017',
         'source_url': 'http://gecms.region-stuttgart.org/Download.aspx?id=104816',
         'source_year': '2019',
         'source_download_date': '2020-11-20'
-    }, 'cal_ms_metropolregion': {
+    }, 'mid_trip_stats_multiple_level': {
         'title': 'Modal Split',
         'description': 'Allgemeine Kennwerte und Verkehrsaufkommen nach regionalstatistischem Raumtyp (RegioSta R7)',
         'source_name': 'infas. MID 2017',
         'source_url': 'http://gecms.region-stuttgart.org/Download.aspx?id=104816',
         'source_year': '2019',
         'source_download_date': '2020-11-20'
-    }, 'cal_n_segmente_metropolregion': {
+    }, 'mid_user_segments': {
         'title': 'Nutzersegmente',
         'description': 'Allgemeine Kennwerte und Verkehrsaufkommen nach regionalstatistischem Raumtyp (RegioSta R7)',
         'source_name': 'infas. MID 2017',
@@ -315,7 +324,7 @@ def import_calib(ctx, calib, db_parameter):
     db_parameter = load_db_parameters(db_parameter)
 
     for key in tables:
-        table_schema = 'calib'
+        table_schema = 'cal'
         drop_table_if_exists(db_parameter, key, table_schema)
         logging.info("Load data to database: " + key)
         load_df_to_database(
@@ -451,42 +460,57 @@ def create_h3_tables(ctx, shape, db_parameter):
 @click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
 @click.pass_context
 def create_mviews(ctx, db_parameter):
-    sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql"))
     logging.info('sql directory: ' + sql_dir)
-
+    queries = os.listdir(sql_dir)
+    queries.sort()
     db_parameter = load_db_parameters(db_parameter)
 
-    # -- 1st ORDER MVIEWS --
-    logging.info('Start with agent home locations mview:')
-    query = sql_dir + '/matsim_input/create_home_locations_mview.sql'
-    run_sql_script(SQL_FILE_PATH=query, db_parameter=db_parameter)
+    logging.info("Create materialized views: " + str(len(queries)))
 
-    query = f'''
-            REFRESH MATERIALIZED VIEW matsim_input."agents_homes_with_raumdata";
+    for query in queries:
+        query_name = query.split(sep="_", maxsplit=1)[1].replace(".sql", "")
+        query = open(sql_dir + "/" + query)
+        query = query.read()
+
+        logging.info("Create view: " + query_name)
+        query = f'''
+            CREATE MATERIALIZED VIEW {query_name} AS(
+                {query}
+            );
             '''
-    with pg.connect(**db_parameter) as con:
-        cursor = con.cursor()
-        cursor.execute(query)
-        con.commit()
 
-    # -- 2nd ORDER MVIEWS (dependend on home locations) --
-    logging.info('Create more mviews...')
-    sql_dir = sql_dir + '/matsim_output'
+        logging.info(query)
+
+        with pg.connect(**db_parameter) as con:
+            cursor = con.cursor()
+            cursor.execute(query)
+            con.commit()
+
+
+@cli.command()
+@click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
+@click.pass_context
+def remove_mviews(ctx, db_parameter):
+    logging.info('sql directory: ' + sql_dir)
     queries = os.listdir(sql_dir)
-    queries = [sql_dir + '/' + query for query in queries]
+    queries.sort(reverse=True)
+    db_parameter = load_db_parameters(db_parameter)
 
-    queries_2nd_order = [query for query in queries if not query.endswith('_3o.sql')]
-    queries_3rd_order = [query for query in queries if query.endswith('_3o.sql')]
+    logging.info("Delete materialized views: " + str(len(queries)))
 
-    for query in queries_2nd_order:
-        run_sql_script(SQL_FILE_PATH=query, db_parameter=db_parameter)
+    for query in queries:
+        query_name = query.split(sep="_", maxsplit=1)[1].replace(".sql", "")
+        logging.info("Drop view: " + query_name)
+        query = f'''
+            DROP MATERIALIZED VIEW IF EXISTS {query_name} ;
+            '''
 
-    # -- 3rd ORDER MVIEWS (dependend on home locations and other 2nd order mviews) --
-    for query in queries_3rd_order:
-        run_sql_script(SQL_FILE_PATH=query, db_parameter=db_parameter)
+        logging.info(query)
 
-    logging.info('Update all mviews...')
-    update_views(db_parameter=db_parameter)
+        with pg.connect(**db_parameter) as con:
+            cursor = con.cursor()
+            cursor.execute(query)
+            con.commit()
 
 
 def generate_hexagon_df(gdf_shape, res):

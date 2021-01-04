@@ -1,17 +1,20 @@
-CREATE MATERIALIZED VIEW matsim_input."agents_homes_with_raumdata" AS (
-
+CREATE MATERIALIZED VIEW matsim_input."sim_agents_enriched" AS (
 	WITH homes AS (
 		SELECT
-			agent.person_id,
-			agent.geometry,
-			gem.ags,
-			LEFT(gem.ags, 5) as kreis_ags,
-			gem.gen,
-			gem.bez,
+			agents.person_id,
+			agents.geometry,
+			krs.ags krs_ags,
+			krs.gen krs_gen,
+			krs.bez krs_bez,
+			gem.ags gem_ags,
+			gem.gen gem_gen,
+			gem.bez gem_bez,
 			gem.regiostar7
-		FROM matsim_input.agent_home_locations agent
-		INNER JOIN general.gemeinden gem
-		ON (st_within(agent.geometry, gem.geometry))
+		FROM matsim_input.sim_agents_raw agents
+		INNER JOIN raw.gemeinden gem
+		ON (st_within(agents.geometry, gem.geometry))
+		INNER JOIN raw.kreise krs
+		ON (st_within(agents.geometry, krs.geometry))
 	),
 
 	region_stuttgart_gemeinden AS (
@@ -23,8 +26,8 @@ CREATE MATERIALIZED VIEW matsim_input."agents_homes_with_raumdata" AS (
 			CASE
 				WHEN gem.regiostar7 = '71' THEN 'LH Stuttgart' ELSE 'Region Stuttgart ohne LH Stuttgart'
 			END AS calib_group
-		FROM general.gemeinden gem
-		INNER JOIN general.areas a
+		FROM raw.gemeinden gem
+		INNER JOIN raw.areas a
 		ON (st_within(gem.geometry, a.geometry))
 		WHERE a.subpop = 'region_stuttgart'
 	)

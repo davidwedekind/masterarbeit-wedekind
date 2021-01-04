@@ -101,7 +101,7 @@ def import_trips(trips, db_parameter, run_name):
     gdf_trips['run_name'] = run_name
 
     # -- IMPORT --
-    table_name = 'trips'
+    table_name = 'sim_trips_raw'
     table_schema = 'matsim_output'
 
     DATA_METADATA = {
@@ -148,8 +148,8 @@ def parse_trips_file(trips):
 
     # -- FURTHER DATA MANIPULATIONS --
     logging.info("Further data manipulations...")
-    gdf_trips.rename(columns={'main_mode': 'm_main_mode'}, inplace=True)
-    gdf_trips['c_main_mode'] = gdf_trips.apply(lambda x: identify_calib_mode(x['m_main_mode'], x['modes']), axis=1)
+    gdf_trips.rename(columns={'main_mode': 'matsim_raw_main_mode'}, inplace=True)
+    gdf_trips['matsim_cal_main_mode'] = gdf_trips.apply(lambda x: identify_calib_mode(x['matsim_raw_main_mode'], x['modes']), axis=1)
     gdf_trips['dep_time'] = gdf_trips['dep_time'].apply(convert_time)
     gdf_trips['trav_time'] = gdf_trips['trav_time'].apply(convert_time)
     gdf_trips['wait_time'] = gdf_trips['wait_time'].apply(convert_time)
@@ -179,7 +179,7 @@ def import_legs(legs, db_parameter, run_name):
     gdf_legs['run_name'] = run_name
 
     # -- IMPORT --
-    table_name = 'legs'
+    table_name = 'sim_legs_raw'
     table_schema = 'matsim_output'
 
     DATA_METADATA = {
@@ -242,29 +242,24 @@ def update_views(db_parameter):
     Function for executing sql scripts that create/ update trip output materialized views
     """
 
-    views = ['matsim_output.distanzklassen',
-             'matsim_output.distanzklassen_inv',
-             'matsim_output.modal_split',
-             'matsim_output.nutzersegmente',
-             'matsim_output.kreis_relationen',
-             'matsim_output.gem_relationen',
-             'matsim_output.h3_res_6_relationen',
-             'matsim_output.h3_res_7_relationen',
-             'matsim_output.h3_res_8_relationen',
-             'matsim_output.wege_eigenschaften',
-             'matsim_output.b_r_auswertung',
-             'matsim_output."08115_08116_modal_split"',
-             'matsim_output.oev_segmente',
-             'matsim_output.modal_split_pro_kreis'
-             ]
+    sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/calibration_views"))
 
-    logging.info("Update materialized views: " + str(len(views)))
+    logging.info('sql directory: ' + sql_dir)
+    queries = os.listdir(sql_dir)
+    queries.sort()
+    db_parameter = load_db_parameters(db_parameter)
 
-    for view in views:
-        logging.info("Update view: " + view)
+    logging.info("Update materialized views: " + str(len(queries)))
+
+    for query in queries:
+        query_name = query.split(sep="_", maxsplit=1)[1].replace(".sql", "")
+        logging.info("Refresh view: " + query_name)
         query = f'''
-        REFRESH MATERIALIZED VIEW {view};
-        '''
+                REFRESH MATERIALIZED VIEW {query_name} ;
+                '''
+
+        logging.info(query)
+
         with pg.connect(**db_parameter) as con:
             cursor = con.cursor()
             cursor.execute(query)
@@ -292,7 +287,7 @@ def import_config_param(config_param, db_parameter, run_name):
     df_modeParameters['run_name'] = run_name
 
     # -- IMPORT --
-    table_name = 'mode_param'
+    table_name = 'sim_mode_params'
     table_schema = 'matsim_input'
 
     DATA_METADATA = {
