@@ -1,5 +1,4 @@
 import geopandas as gpd
-import pandas as pd
 import numpy as np
 import psycopg2 as pg
 from geoalchemy2 import Geometry, WKTElement
