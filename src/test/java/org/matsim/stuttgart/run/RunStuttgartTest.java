@@ -8,7 +8,7 @@ import org.matsim.core.controler.Controler;
 
 public class RunStuttgartTest {
 
-    @Test
+/*    @Test
     @Ignore
     public void testRunnerWithAllExtensions(){
 
@@ -22,5 +22,5 @@ public class RunStuttgartTest {
         Controler controler = RunStuttgartWithAdditionalModules.prepareControler( scenario ) ;
         controler.run() ;
 
-    }
+    }*/
 }

@@ -65,18 +65,17 @@
         </dependency>
 
 
-        <!--dependency>
+        <dependency>
             <groupId>com.github.matsim-scenarios</groupId>
             <artifactId>matsim-stuttgart</artifactId>
-            <version></version>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>-->
+            <version>317a992</version>
+        </dependency>
 
+        <dependency>
+            <groupId>com.github.matsim-vsp</groupId>
+            <artifactId>pt-extensions</artifactId>
+            <version>fac7381209</version>
+        </dependency>
 
         <dependency>
             <groupId>com.github.matsim-org</groupId>
