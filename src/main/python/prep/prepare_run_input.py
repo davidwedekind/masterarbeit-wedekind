@@ -3,6 +3,7 @@ import pandas as pd
 import click
 import logging
 import xml.etree.ElementTree as ET
+import io
 
 sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/calibration_views"))
 
@@ -78,11 +79,11 @@ def create_configs_and_bash_scripts(ctx, excel, sheet, config_template, bash_tem
         config_file_name = config_template.rsplit("/", 1)[1].replace("xxx", run_name)
         tree.write(run_directory + "/" + config_file_name)
 
-        bash = open(bash_template)
+        bash = io.open(bash_template)
         script = bash.readlines()
         script[2] = script[2].replace("xxx", run_name)
         bash_file_name = bash_template.rsplit("/", 1)[1].replace("xxx", run_name)
-        bash = open(run_directory + "/" + bash_file_name, "w")
+        bash = io.open(run_directory + "/" + bash_file_name, 'w', newline='\n')
         bash.writelines(script)
         bash.close()
 
