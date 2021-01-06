@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import click
 import logging
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 import io
 
 sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/calibration_views"))
@@ -49,35 +49,35 @@ def create_configs_and_bash_scripts(ctx, excel, sheet, config_template, bash_tem
         elements = root.findall(
             "./module[@name='planCalcScore']/parameterset[@type='scoringParameters']/parameterset[@type='modeParams']")
         for element in elements:
-            if isinstance(element.find("./param[@value='car']"), ET.Element):
+            if isinstance(element.find("./param[@value='car']"), ET._Element):
                 element.find("./param[@name='constant']").set('value', str(row['car_constant']))
                 element.find("./param[@name='marginalUtilityOfTraveling_util_hr']").set('value',
                                                                                         str(row['car_mUT_hr']))
 
-            if isinstance(element.find("./param[@value='ride']"), ET.Element):
+            if isinstance(element.find("./param[@value='ride']"), ET._Element):
                 element.find("./param[@name='constant']").set('value', str(row['ride_constant']))
                 element.find("./param[@name='marginalUtilityOfTraveling_util_hr']").set('value',
                                                                                         str(row['ride_mUT_hr']))
 
-            if isinstance(element.find("./param[@value='pt']"), ET.Element):
+            if isinstance(element.find("./param[@value='pt']"), ET._Element):
                 element.find("./param[@name='constant']").set('value', str(row['pt_constant']))
                 element.find("./param[@name='marginalUtilityOfTraveling_util_hr']").set('value', str(row['pt_mUT_hr']))
 
-            if isinstance(element.find("./param[@value='bike']"), ET.Element):
+            if isinstance(element.find("./param[@value='bike']"), ET._Element):
                 element.find("./param[@name='constant']").set('value', str(row['bike_constant']))
                 element.find("./param[@name='marginalUtilityOfTraveling_util_hr']").set('value',
                                                                                         str(row['bike_mUT_hr']))
 
-            if isinstance(element.find("./param[@value='walk']"), ET.Element):
+            if isinstance(element.find("./param[@value='walk']"), ET._Element):
                 element.find("./param[@name='constant']").set('value', str(row['walk_constant']))
                 element.find("./param[@name='marginalUtilityOfTraveling_util_hr']").set('value',
                                                                                         str(row['walk_mUT_hr']))
 
-        run_no = str(index + 1).zfill(2)
-
-        run_name = "cal_" + sheet.replace("batch_", "") + "_" + run_no
+        run_name = row['run_name']
         config_file_name = config_template.rsplit("/", 1)[1].replace("xxx", run_name)
-        tree.write(run_directory + "/" + config_file_name)
+        output_filename = run_directory + "/" + config_file_name
+        with open(output_filename, 'wb') as destination:
+            tree.write(destination, encoding='utf-8', xml_declaration=True)
 
         bash = io.open(bash_template)
         script = bash.readlines()
