@@ -36,8 +36,6 @@ public class ModifyTransitScheduleTest {
 
         ModifyTransitSchedule modifier = new ModifyTransitSchedule(scenario);
         modifier.removeLine("ALT 1002 - 1");
-        List<String> stopsToCancel = Arrays.asList("801176.2", "800691", "800689.3");
-        modifier.shortenLine("Bus 365 - 12", stopsToCancel);
 
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(outputPath.toString());
 
