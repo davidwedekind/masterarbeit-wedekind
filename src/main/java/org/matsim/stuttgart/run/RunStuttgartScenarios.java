@@ -1,15 +1,32 @@
 package org.matsim.stuttgart.run;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.Config;
 import org.matsim.core.controler.Controler;
 
-public class ScenarioCreator {
+public class RunStuttgartScenarios {
+    private static final Logger log = Logger.getLogger(RunStuttgartScenarios.class);
+    private Config config;
+    private Scenario scenario;
+    private Controler controler;
 
-    private static final Logger log = Logger.getLogger(ScenarioCreator.class);
+/*    private RunStuttgartScenarios(RunArguments arguments){
 
-    public void run(String args[]) {
+    }
+
+    public static void main(String[] args) {
+
+        // The first two arguments are config setting arguments passed to the runner class
+        RunArguments arguments = new RunArguments();
+        JCommander.newBuilder().addObject(arguments).build().parse(args);
+        new RunStuttgartScenarios(arguments).run();
+
+    }
+
+    public void run() {
         BikeAndRideSwitch bikeAndRide = BikeAndRideSwitch.BASE_CASE;
         ParkingSwitch parking = ParkingSwitch.BASE_CASE;
         PTFaresSwitch ptFares = PTFaresSwitch.BASE_CASE;
@@ -41,7 +58,7 @@ public class ScenarioCreator {
                 chainModes = new String[]{"car, bike"};
         }
 
-        Config config = RunStuttgartWedekindCalibration.prepareConfig(bikeTeleportedModeSpeed, bikeIntermodalTransferCosts, chainModes, args);
+        Config config = RunStuttgartWedekindCalibration.prepareConfig(bikeTeleportedModeSpeed, bikeIntermodalTransferCosts, chainModes, arguments);
 
         // -- PARKING SWITCH --
         String parkingZoneShapeFileName;
@@ -92,6 +109,27 @@ public class ScenarioCreator {
         controler.run();
     }
 
+    private static class RunArguments {
+
+        @Parameter(names = "-inputDir", required = true)
+        String inputDir;
+
+        @Parameter(names = "-outputDir", required = true)
+        String outputDir;
+
+        @Parameter(names = "-runId", required = true)
+        String runId;
+
+        @Parameter(names = "-countsWeight")
+        double countsWeight = 150;
+
+        @Parameter(names = "-marginalsWeight")
+        double marginalsWeight = 150;
+
+        @Parameter(names = "-startMode")
+        String startMode = "pt";
+    }
+
     enum BikeAndRideSwitch {
         BASE_CASE,
         LOW_IMPROVEMENT,
@@ -111,6 +149,6 @@ public class ScenarioCreator {
         LOW_FARE_DECREASE,
         MEDIUM_FARE_DECREASE,
         HIGH_FARE_DECREASE
-    }
+    }*/
 
 }
