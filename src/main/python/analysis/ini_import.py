@@ -88,7 +88,7 @@ def import_agents(ctx, plans, db_parameter):
     logging.info('Create enriched mview for agents...')
     logging.info('sql directory: ' + sql_dir)
 
-    query = sql_dir + '/agents_enriched_mview.sql'
+    query = sql_dir + '/../agents_enriched_mview.sql'
     run_sql_script(SQL_FILE_PATH=query, db_parameter=db_parameter)
     logging.info("Successful mview creation!")
 
