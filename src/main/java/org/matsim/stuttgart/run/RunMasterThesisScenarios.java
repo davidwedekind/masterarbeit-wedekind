@@ -7,26 +7,26 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.Config;
 import org.matsim.core.controler.Controler;
 
-public class RunStuttgartScenarios {
-    private static final Logger log = Logger.getLogger(RunStuttgartScenarios.class);
+public class RunMasterThesisScenarios {
+    private static final Logger log = Logger.getLogger(RunMasterThesisScenarios.class);
     private Config config;
     private Scenario scenario;
     private Controler controler;
 
-/*    private RunStuttgartScenarios(RunArguments arguments){
+/*    private RunMasterThesisScenarios(RunArguments arguments){
 
-    }
+    }*/
 
-    public static void main(String[] args) {
+/*    public static void main(String[] args) {
 
         // The first two arguments are config setting arguments passed to the runner class
         RunArguments arguments = new RunArguments();
         JCommander.newBuilder().addObject(arguments).build().parse(args);
-        new RunStuttgartScenarios(arguments).run();
+        new RunMasterThesisScenarios(arguments).run();
 
-    }
+    }*/
 
-    public void run() {
+    /*public void run() {
         BikeAndRideSwitch bikeAndRide = BikeAndRideSwitch.BASE_CASE;
         ParkingSwitch parking = ParkingSwitch.BASE_CASE;
         PTFaresSwitch ptFares = PTFaresSwitch.BASE_CASE;
