@@ -38,6 +38,17 @@ public class BanCarsFromSmallerStreets {
         log.info("capacityThreshold: " + input.capacityThreshold);
         log.info("Output network file: " + input.outputNetwork);
 
+/*        var network = NetworkUtils.createNetwork();
+        var inputNetwork = input.inputNetwork;
+        var outputNetwork = NetworkUtils.createNetwork().getLinks().values().stream()
+                .map(link -> {
+                    var newLink = network.getFactory().createLink(link.getId(), link.getFromNode(), link.getToNode());
+                    newLink.setFreespeed(link.getFreespeed());
+                    return newLink;
+                })
+                .collect(NetworkUtils.getCollector());*/
+
+
         Network network = NetworkUtils.readNetwork(input.inputNetwork);
         new BanCarsFromSmallerStreets(network).run(input.shapeFilePath, input.freespeedThreshold, input.capacityThreshold);
         new NetworkWriter(network).write(input.outputNetwork);
