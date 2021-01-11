@@ -6,8 +6,12 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.pt.transitSchedule.api.*;
+import playground.vsp.andreas.utils.pt.TransitLineRemover;
+import playground.vsp.andreas.utils.pt.TransitScheduleCleaner;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ModifyTransitSchedule {
@@ -57,21 +61,11 @@ public class ModifyTransitSchedule {
     }
 
 
-    public void extendLine(String transitLineName, List<String> stopsToAdd, List<String> linksToAdd, List<Integer> travelTimesToAdd){
+    private TransitRoute copyAndAdjustRoute(TransitRoute oldRoute, List<String> stopsToCancel) {
 
-    }
-
-
-    public TransitRoute copyAndAdjustRoute(TransitRoute route, List<String> stopsToCancel) {
-
-        List<Id<Link>> links = route.getRoute().getLinkIds().stream()
-                .filter(linkId -> {
-                    Link link = network.getLinks().get(linkId);
-                    return ! stopsToCancel.contains(link.getToNode().getId().toString());
-                })
-                .collect(Collectors.toList());
-
-        List<TransitRouteStop> stops = route.getStops().stream()
+        // Remove stops2Cancel from Route only -> more sophisticated would be also to adjust also network route, stops etc...
+        // Filter stops: Do not keep keep stops to be canceled
+        List<TransitRouteStop> stops2Keep = oldRoute.getStops().stream()
                 .filter(transitRouteStop -> {
                     TransitStopFacility stopFacility = transitRouteStop.getStopFacility();
                     return ! stopsToCancel.contains(stopFacility.getId().toString());
@@ -79,16 +73,71 @@ public class ModifyTransitSchedule {
                 .collect(Collectors.toList());
 
         TransitRoute newRoute = scenario.getTransitSchedule().getFactory().createTransitRoute(
-                route.getId(),
-                RouteUtils.createNetworkRoute(links),
-                stops,
-                route.getTransportMode());
+                oldRoute.getId(),
+                oldRoute.getRoute(),
+                stops2Keep,
+                oldRoute.getTransportMode());
 
-        for (Departure departure: route.getDepartures().values()){
+        for (Departure departure: oldRoute.getDepartures().values()){
             newRoute.addDeparture(departure);
         }
 
         return newRoute;
 
     }
+
+
+    public void extendLine(String transitLineName, List<Id<TransitStopFacility>> stops2Add, Map<Id<TransitStopFacility>, Double> departureOffsets, Map<Id<TransitStopFacility>, Double> arrivalOffsets) {
+        TransitLine line = transitSchedule.getTransitLines().get(Id.create(transitLineName, TransitLine.class));
+        // network extension
+
+        TransitScheduleCleaner cleaner = new TransitScheduleCleaner();
+
+        //transitSchedule.getFactory().createTransitStopFacility();
+
+
+
+        // transit schedule extension
+        for (TransitRoute oldRoute : line.getRoutes().values()) {
+            List<TransitRouteStop> newStops;
+
+            if (oldRoute.getStops().get(oldRoute.getStops().size() - 1).getStopFacility().getId().equals(stops2Add.get(0))) {
+                // Extension at the end of oldRoute
+
+
+                newStops = oldRoute.getStops();
+
+
+
+
+                for (Id<TransitStopFacility> stopFacilityId: stops2Add){
+                    //network.addNode(network.getFactory().createNode());
+                    //network.addLink(network.getFactory().createLink());
+                }
+
+            } else if (oldRoute.getStops().get(0).getStopFacility().getId().equals(stops2Add.get(stops2Add.size() - 1))) {
+                // Extension at the beginning of oldRoute
+
+                newStops = oldRoute.getStops();
+
+            } else {
+                // Route does not connect with extension
+                break;
+
+            }
+
+
+            TransitRoute newRoute = scenario.getTransitSchedule().getFactory().createTransitRoute(
+                    oldRoute.getId(),
+                    oldRoute.getRoute(),
+                    newStops,
+                    oldRoute.getTransportMode());
+
+            line.removeRoute(oldRoute);
+            line.addRoute(newRoute);
+
+        }
+    }
+
+
 }
