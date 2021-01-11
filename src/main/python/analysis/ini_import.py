@@ -88,7 +88,7 @@ def import_agents(ctx, plans, db_parameter):
     logging.info('Create enriched mview for agents...')
     logging.info('sql directory: ' + sql_dir)
 
-    query = sql_dir + '/../agents_enriched_mview.sql'
+    query = sql_dir + '/agents_enriched_mview.sql'
     run_sql_script(SQL_FILE_PATH=query, db_parameter=db_parameter)
     logging.info("Successful mview creation!")
 
@@ -336,61 +336,6 @@ def import_calib(ctx, calib, db_parameter):
             meta_data=DATA_METADATA[key])
 
     logging.info("Import of calibration data successful!")
-
-
-@cli.command()
-@click.option('--plausibility', type=str, default='', help='path to calib data [.xlsx]')
-@click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
-@click.pass_context
-def import_plausibility_data(ctx, plausibility, db_parameter):
-    """
-    CALIBRATION DATA
-    This is the function which can be executed for uploading plausibility data to database
-
-    ---------
-    Execution:
-    python ini_import import-calib
-    --calib [xlsx file path]
-    --db_parameter [path of db parameter json]
-    ---------
-
-    """
-
-    # -- PRE-CALCULATIONS --
-    logging.info("Read-in excel file...")
-    tables = dict()
-    tables['mid_plausi_trip_calc'] = pd.read_excel(plausibility, sheet_name='03b_AbsoluteNoTrips', dtype={'ags': str})
-
-    for df in tables.values():
-        df.columns = df.columns.map(str.lower)
-
-    # -- META DATA --
-    DATA_METADATA = {'mid_plausi_trip_calc': {
-        'title': 'Plausbilitätsdaten',
-        'description': 'Tabelle A W12 Wegelänge - Stadt Stuttgart',
-        'source_name': 'Tabellarische Grundausertung Stadt Stuttgart. MID 2017',
-        'source_url': 'https://vm.baden-wuerttemberg.de/fileadmin/redaktion/m-mvi/intern/Dateien/PDF/MID2017_Stadt_Stuttgart.pdf',
-        'source_year': '2018',
-        'source_download_date': '2020-11-20'
-    }
-    }
-
-    # -- IMPORT --
-    db_parameter = load_db_parameters(db_parameter)
-
-    for key in tables:
-        table_schema = 'plausibility'
-        drop_table_if_exists(db_parameter, key, table_schema)
-        logging.info("Load data to database: " + key)
-        load_df_to_database(
-            df=tables[key],
-            update_mode='replace',
-            db_parameter=db_parameter,
-            schema=table_schema,
-            table_name=key,
-            meta_data=DATA_METADATA[key])
-
-    logging.info("Import of plausibility data successful!")
 
 
 @cli.command()

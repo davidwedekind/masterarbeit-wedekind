@@ -247,6 +247,7 @@ def update_views(db_parameter):
     logging.info('sql directory: ' + sql_dir)
     queries = os.listdir(sql_dir)
     queries.sort()
+    db_parameter = load_db_parameters(db_parameter)
 
     logging.info("Update materialized views: " + str(len(queries)))
 
