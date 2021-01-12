@@ -1,4 +1,4 @@
-package org.matsim.stuttgart;
+package org.matsim.masterThesis;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;

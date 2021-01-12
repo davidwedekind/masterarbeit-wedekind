@@ -64,11 +64,10 @@
             <version>12.11</version>
         </dependency>
 
-
         <dependency>
             <groupId>com.github.matsim-scenarios</groupId>
             <artifactId>matsim-stuttgart</artifactId>
-            <version>317a992</version>
+            <version>1b22c9d7</version>
         </dependency>
 
         <dependency>

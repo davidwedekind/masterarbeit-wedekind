@@ -1,10 +1,16 @@
-package org.matsim.stuttgart.run;
+package org.matsim.masterThesis.run;
 
+import graphql.AssertException;
+import org.apache.commons.lang3.EnumUtils;
 import org.matsim.core.config.ReflectiveConfigGroup;
 import org.matsim.core.utils.collections.CollectionUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+/**
+ * @author dwedekind
+ */
 
 public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConfigGroup {
     private static final String GROUP_NAME = "stuttgartMasterThesisExperimental";
@@ -24,7 +30,7 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
     private boolean reducedCarInfrastructure = false;
     private double reducedCarInfrastructureFreespeedThreshold = 10.;
     private double reducedCarInfrastructureCapacityThreshold = 650.;
-    private Set<PtExtension> ptNetworkExtensions = new HashSet<>();
+    private final Set<PtExtension> ptNetworkExtensions = new HashSet<>();
 
     public StuttgartMasterThesisExperimentalConfigGroup(){
         super(GROUP_NAME);
@@ -100,8 +106,22 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
     }
 
     @StringSetter(PT_NETWORK_EXTENSIONS)
-    public void setPtNetworkExtensions(Set<PtExtension> ptNetworkExtensions) {
-        this.ptNetworkExtensions = ptNetworkExtensions;
+    public void setPtNetworkExtensions(String ptNetworkExtensions) {
+        Set<String> ptNetworkExtensionsSet = CollectionUtils.stringToSet(ptNetworkExtensions);
+        Set<PtExtension> newPtNetworkExtensionsSet = ptNetworkExtensionsSet.stream()
+                .map(extension -> {
+                    if (EnumUtils.isValidEnum(PtExtension.class, extension)) {
+                        return PtExtension.valueOf(extension);
+                    } else {
+                        throw new AssertException("There is no pt network extension with name: " + extension);
+                    }
+                })
+                .collect(Collectors.toSet());
+    }
+
+    public void setPtNetworkExtensions(Set<PtExtension> ptNetworkExtensions){
+        this.ptNetworkExtensions.clear();
+        this.ptNetworkExtensions.addAll(ptNetworkExtensions);
     }
 
 

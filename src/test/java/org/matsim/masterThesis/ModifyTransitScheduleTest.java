@@ -1,4 +1,4 @@
-package org.matsim.stuttgart.ptModifier;
+package org.matsim.masterThesis;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class ModifyTransitScheduleTest {
         new TransitScheduleReader(scenario).readFile(transitSchedulePath.toString());
         new MatsimNetworkReader(scenario.getNetwork()).readFile(networkPath.toString());
 
-        ModifyTransitSchedule modifier = new ModifyTransitSchedule(scenario);
+        ModifyPublicTransit modifier = new ModifyPublicTransit(scenario);
         modifier.removeLine("ALT 1002 - 1");
 
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(outputPath.toString());
@@ -54,7 +54,7 @@ public class ModifyTransitScheduleTest {
         }
 
 
-        ModifyTransitSchedule modifier = new ModifyTransitSchedule(scenario);
+        ModifyPublicTransit modifier = new ModifyPublicTransit(scenario);
         List<String> stopsToCancel = Arrays.asList("557985", "557983", "557997", "557980", "561004", "555473", "555472", "561003", "557977", "560458", "560457");
         modifier.shortenLine("Bus 120 - 11", stopsToCancel);
 

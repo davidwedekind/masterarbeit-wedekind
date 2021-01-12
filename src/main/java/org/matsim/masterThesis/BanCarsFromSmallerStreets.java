@@ -1,4 +1,4 @@
-package org.matsim.stuttgart;
+package org.matsim.masterThesis;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -13,7 +13,6 @@ import org.matsim.core.utils.gis.ShapeFileReader;
 import org.opengis.feature.simple.SimpleFeature;
 
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
