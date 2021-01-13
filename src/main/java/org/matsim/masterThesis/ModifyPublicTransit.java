@@ -60,35 +60,114 @@ public class ModifyPublicTransit {
                 .map((Function<String, Id<Link>>) Id::createLinkId).collect(Collectors.toList());
 
         // Transit Route Stops
-        List<TransitRouteStop> transitRouteStopsDirB = Arrays.asList(
-                tS.getFactory().createTransitRouteStop()
-        )
+        List<TransitRouteStop> transitRouteStopsDirFilderstadt = Arrays.asList(
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005201.1", TransitStopFacility.class)), 120, 120),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8003622.2", TransitStopFacility.class)), 540, 540),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001650.1", TransitStopFacility.class)), 720, 720),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005768.1", TransitStopFacility.class)), 900, 900),
+               tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001984.1", TransitStopFacility.class)), 1020, 1020));
+        List<TransitRouteStop> transitRouteStopsDirBoeblingen = Arrays.asList(
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001984", TransitStopFacility.class)), 0, 0),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005768", TransitStopFacility.class)), 120, 120),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001650", TransitStopFacility.class)), 300, 300),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8003622", TransitStopFacility.class)), 480, 480),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005201.2", TransitStopFacility.class)), 900, 900),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001055.4", TransitStopFacility.class)), 1080, 1080));
 
-        TransitLine lineS60 = tS.getTransitLines().get("S 60 - 1");
+        TransitLine lineS60 = tS.getTransitLines().get(Id.create("S 60 - 1", TransitLine.class));
         for (TransitRoute oldRoute: lineS60.getRoutes().values()){
+            TransitRoute newRoute;
+            if (oldRoute.getStops().get(oldRoute.getStops().size() - 1).getStopFacility().getId()
+                    .equals(Id.create("8001055.6", TransitStopFacility.class))){
+
+                newRoute = tS.getFactory().createTransitRoute(
+                        oldRoute.getId(),
+                        extendNetworkRoute(oldRoute.getRoute().getLinkIds(), linksToAddDirFilderstadt, false),
+                        extendRouteStopList(oldRoute.getStops(), transitRouteStopsDirFilderstadt, false),
+                        TransportMode.pt);
+
+                for (Departure departure: oldRoute.getDepartures().values()){
+                    newRoute.addDeparture(departure);
+                }
+
+            } else if (oldRoute.getStops().get(0).getStopFacility().getId()
+                    .equals(Id.create("8001055.3", TransitStopFacility.class))){
+
+                final double offSet = transitRouteStopsDirBoeblingen.get(transitRouteStopsDirBoeblingen.size() - 1)
+                        .getDepartureOffset().seconds();
+
+                newRoute = tS.getFactory().createTransitRoute(
+                        oldRoute.getId(),
+                        extendNetworkRoute(oldRoute.getRoute().getLinkIds(), linksToAddDirBoeblingen, true),
+                        extendRouteStopList(oldRoute.getStops(), transitRouteStopsDirBoeblingen, true),
+                        TransportMode.pt);
+
+                for (Departure departure: oldRoute.getDepartures().values()){
+                    if ((departure.getDepartureTime() - offSet) > 0){
+                        Departure newDeparture = tS.getFactory().createDeparture(departure.getId(), departure.getDepartureTime() - offSet);
+                        newDeparture.setVehicleId(departure.getVehicleId());
+                        newRoute.addDeparture(newDeparture);
+
+                    }
+
+                }
+
+            } else {
+                continue;
+
+            }
 
 
-            TransitRoute newRoute = tS.getFactory().createTransitRoute(
-                    oldRoute.getId(),
-                    extendNetworkRoute(oldRoute.getRoute().getLinkIds(), linksToAddDirBoeblingen, true),
+            lineS60.removeRoute(oldRoute);
+            lineS60.addRoute(newRoute);
 
-            )
         }
     }
 
-    private NetworkRoute extendNetworkRoute(List<Id<Link>> routeLinks, List<Id<Link>> linksToAddDirBoeblingen, boolean atTheEnd) {
-        if (atTheEnd){
-            routeLinks.addAll(linksToAddDirBoeblingen);
+
+    private NetworkRoute extendNetworkRoute(List<Id<Link>> routeLinks, List<Id<Link>> linksToAdd, boolean atTheEnd) {
+        if (atTheEnd) {
+            routeLinks.addAll(linksToAdd);
             return RouteUtils.createNetworkRoute(routeLinks);
 
-        }else{
-            linksToAddDirBoeblingen.addAll(routeLinks);
-            return RouteUtils.createNetworkRoute(linksToAddDirBoeblingen);
+        } else {
+            routeLinks.remove(0);
+            linksToAdd.addAll(routeLinks);
+            return RouteUtils.createNetworkRoute(linksToAdd);
 
         }
     }
 
-    private
+
+    private List<TransitRouteStop> extendRouteStopList(List<TransitRouteStop> transitRouteStops, List<TransitRouteStop> transitRouteStopsToAdd, boolean atTheEnd){
+        final double offSet;
+
+        if (atTheEnd) {
+            offSet = transitRouteStops.get(transitRouteStops.size() - 1).getDepartureOffset().seconds();
+        } else {
+            offSet = 0.;
+        }
+
+        List<TransitRouteStop> newTransitRouteStopsToAdd = transitRouteStopsToAdd.stream()
+                .map(transitRouteStop -> tS.getFactory().createTransitRouteStop(
+                        transitRouteStop.getStopFacility(),
+                        transitRouteStop.getArrivalOffset().seconds() + offSet,
+                        transitRouteStop.getDepartureOffset().seconds() + offSet
+                ))
+                .collect(Collectors.toList());
+
+        if (atTheEnd) {
+            transitRouteStops.addAll(newTransitRouteStopsToAdd);
+            return transitRouteStops;
+        } else {
+            transitRouteStops.remove(0);
+            transitRouteStopsToAdd.addAll(transitRouteStops);
+            return transitRouteStopsToAdd;
+        }
+
+
+
+    }
 
 
     public void createU5Extension(){
