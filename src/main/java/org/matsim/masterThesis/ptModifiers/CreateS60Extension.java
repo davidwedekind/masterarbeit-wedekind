@@ -45,6 +45,8 @@ public class CreateS60Extension {
         config.network().setInputFile(input.networkFile);
         config.vehicles().setVehiclesFile(input.transitVehicles);
 
+
+
         TransitScheduleValidator.ValidationResult resultAfterModifying = TransitScheduleValidator.validateAll(
                 scenario.getTransitSchedule(), scenario.getNetwork());
         log.info("Transit validator results after modifying:");
@@ -66,8 +68,8 @@ public class CreateS60Extension {
         Node stopGoldberg = network.getNodes().get(Id.createNodeId("tr8005201"));
         Node stopLeinfelden = network.getNodes().get(Id.createNodeId("tr8003622"));
 
-        Link linkTrNew0001 = utils.createLink("trNew0001", stopGoldberg, stopLeinfelden);
-        Link linkTrNew0002 = utils.createLink("trNew0002", stopLeinfelden, stopGoldberg);
+        Link linkTrNew0001 = utils.createLink("trNew0001", stopGoldberg, stopLeinfelden, TransportMode.train);
+        Link linkTrNew0002 = utils.createLink("trNew0002", stopLeinfelden, stopGoldberg, TransportMode.train);
         network.addLink(linkTrNew0001);
         network.addLink(linkTrNew0002);
 

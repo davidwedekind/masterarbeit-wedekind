@@ -85,9 +85,9 @@ public class PtUtils {
         return newTransitRouteStops;
     }
 
-    public Link createLink(String id, Node from, Node to) {
+    public Link createLink(String id, Node from, Node to, String ptMode) {
         Link link = network.getFactory().createLink(Id.createLinkId(id), from, to);
-        link.setAllowedModes(new HashSet<>(Collections.singletonList(TransportMode.pt)));
+        link.setAllowedModes(new HashSet<>(Collections.singletonList(ptMode)));
         link.setCapacity(999999);
         link.setLength(NetworkUtils.getEuclideanDistance(link.getFromNode().getCoord(), link.getToNode().getCoord()));
         link.setFreespeed(28.);

@@ -18,7 +18,7 @@ public class CreateS60ExtensionTest {
 
     @Test
     public void testRunExtensionModifications() throws Exception {
-        Path transitSchedulePath = Paths.get("C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/02_stuttgart-v1.0_test/input/optimizedSchedule.xml.gz");
+        Path transitSchedulePath = Paths.get("C:/Users/david/Desktop/evenMoreReducedSchedule.xml");
         Path networkPath = Paths.get("C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/02_stuttgart-v1.0_test/input/optimizedNetwork.xml.gz");
         Path transitVehiclesPath = Paths.get("C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/02_stuttgart-v1.0_test/input/optimizedVehicles.xml.gz");
         Path outputPath = Paths.get("C:/Users/david/Documents/03_Repositories/masterarbeit-wedekind/test/output/ptModifier/optimizedSchedule.xml");
@@ -32,14 +32,23 @@ public class CreateS60ExtensionTest {
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
+        TransitScheduleValidator.ValidationResult resultBeforeModifying = TransitScheduleValidator.validateAll(
+                scenario.getTransitSchedule(), scenario.getNetwork());
+        log.info("Transit validator results BEFORE modifying:");
+        for (String errorMessage:resultBeforeModifying.getErrors()){
+            throw new Exception(errorMessage);
+        }
+        log.info("----------------");
+
         new CreateS60Extension().runExtensionModifications(scenario);
 
         TransitScheduleValidator.ValidationResult resultAfterModifying = TransitScheduleValidator.validateAll(
                 scenario.getTransitSchedule(), scenario.getNetwork());
-        log.info("Transit validator results after modifying:");
+        log.info("Transit validator results AFTER modifying:");
         for (String errorMessage:resultAfterModifying.getErrors()){
             throw new Exception(errorMessage);
         }
+        log.info("----------------");
 
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(outputPath.toString());
 
