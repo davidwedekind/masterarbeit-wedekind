@@ -7,7 +7,7 @@ import org.matsim.core.controler.Controler;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.masterThesis.BanCarsFromSmallerStreets;
-import org.matsim.masterThesis.ModifyPublicTransit;
+import org.matsim.masterThesis.ptModifiers.CreateS60Extension;
 import org.matsim.stuttgart.run.StuttgartMasterThesisRunner;
 
 /**
@@ -54,21 +54,20 @@ public class RunMasterThesisScenarios {
 
         // If atleast one 'ptExtension' is switched on, then modify pt (network, transit schedule)
         if (thesisExpConfigGroup.getPtNetworkExtensions() != null){
-            ModifyPublicTransit modifier = new ModifyPublicTransit(scenario);
-
             if (thesisExpConfigGroup.getPtNetworkExtensions().contains(
                     StuttgartMasterThesisExperimentalConfigGroup.PtExtension.S60)){
-                modifier.createS60Extension();
+
+                new CreateS60Extension().runExtensionModifications(scenario);
             }
 
             if (thesisExpConfigGroup.getPtNetworkExtensions().contains(
                     StuttgartMasterThesisExperimentalConfigGroup.PtExtension.U5)){
-                modifier.createU5Extension();
+                // extend U5
             }
 
             if (thesisExpConfigGroup.getPtNetworkExtensions().contains(
                     StuttgartMasterThesisExperimentalConfigGroup.PtExtension.U6)){
-                modifier.createU6Extension();
+                // extend U6
             }
 
             // Here possibly connection alignment Stuttgart Flughafen/ Messe as last measure
@@ -78,6 +77,7 @@ public class RunMasterThesisScenarios {
 
         Controler controler = StuttgartMasterThesisRunner.prepareControler( scenario ) ;
         controler.run() ;
+
 
     }
 
