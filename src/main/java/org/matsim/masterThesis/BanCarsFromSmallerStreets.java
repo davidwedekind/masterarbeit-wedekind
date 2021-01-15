@@ -8,11 +8,14 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.opengis.feature.simple.SimpleFeature;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -62,6 +65,14 @@ public class BanCarsFromSmallerStreets {
                             .collect(Collectors.toSet());
                     link.setAllowedModes(allowedModes);
                 });
+
+        log.info("Links successfully adjusted!");
+        log.info("Start cleaning the network for modes car and ride...");
+
+        Set<String> modes = new HashSet<>();
+        modes.add(TransportMode.car);
+        modes.add(TransportMode.ride);
+        new MultimodalNetworkCleaner(network).run(modes);
 
         log.info("Network sucessfully modified!");
     }
