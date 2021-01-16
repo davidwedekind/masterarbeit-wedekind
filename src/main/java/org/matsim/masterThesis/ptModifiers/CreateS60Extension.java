@@ -18,6 +18,7 @@ import org.matsim.pt.utils.TransitScheduleValidator;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author dwedekind
@@ -64,45 +65,64 @@ public class CreateS60Extension {
         Network network = scenario.getNetwork();
         TransitSchedule tS = scenario.getTransitSchedule();
 
-        // Create additional infrastructure (Rohrer Kurve)
+
+        // Create additional infrastructure
+        // (Rohrer Kurve)
         Node stopGoldberg = network.getNodes().get(Id.createNodeId("tr8005201"));
         Node stopLeinfelden = network.getNodes().get(Id.createNodeId("tr8003622"));
 
         Link linkTrNew0001 = utils.createLink("trNew0001", stopGoldberg, stopLeinfelden, TransportMode.train);
         Link linkTrNew0002 = utils.createLink("trNew0002", stopLeinfelden, stopGoldberg, TransportMode.train);
+
         network.addLink(linkTrNew0001);
         network.addLink(linkTrNew0002);
+
 
         // Create additional stop facilities
         TransitStopFacility stopFacilityTr8003622_1 = tS.getFacilities().get(Id.create("8003622.1", TransitStopFacility.class));
         TransitStopFacility stopFacilityTr8003622_2 = utils.createStopFacility("8003622.2", stopFacilityTr8003622_1.getCoord(), linkTrNew0001.getId(), stopFacilityTr8003622_1.getName(), stopFacilityTr8003622_1.getStopAreaId());
 
         TransitStopFacility stopFacilityTr8005201_0 = tS.getFacilities().get(Id.create("8005201", TransitStopFacility.class));
-        TransitStopFacility stopFacilityTr8005201_2 = utils.createStopFacility("8005201.2", stopFacilityTr8005201_0.getCoord(), linkTrNew0001.getId(), stopFacilityTr8005201_0.getName(), stopFacilityTr8005201_0.getStopAreaId());
+        TransitStopFacility stopFacilityTr8005201_2 = utils.createStopFacility("8005201.2", stopFacilityTr8005201_0.getCoord(), linkTrNew0002.getId(), stopFacilityTr8005201_0.getName(), stopFacilityTr8005201_0.getStopAreaId());
 
-        // Specify links to add on network routes of S60
-        List<Id<Link>> linksToAddDirFilderstadt = (Arrays.asList("tr672168", "trNew0001", "tr673031", "tr673032", "tr673033")).stream()
+        tS.addStopFacility(stopFacilityTr8003622_2);
+        tS.addStopFacility(stopFacilityTr8005201_2);
+
+
+/*        // Specify links to add on network routes of S60
+        List<Id<Link>> linksToAddDirFilderstadt = Stream.of("tr672168", "trNew0001", "tr673031", "tr673032", "tr673033")
                 .map((Function<String, Id<Link>>) Id::createLinkId).collect(Collectors.toList());
-        List<Id<Link>> linksToAddDirBoeblingen = (Arrays.asList("tr672997", "tr672998", "tr672999", "tr673000", "trNew0002", "tr672157")).stream()
-                .map((Function<String, Id<Link>>) Id::createLinkId).collect(Collectors.toList());
+        List<Id<Link>> linksToAddDirBoeblingen = Stream.of("tr672997", "tr672998", "tr672999", "tr673000", "trNew0002", "tr672157")
+                .map((Function<String, Id<Link>>) Id::createLinkId).collect(Collectors.toList());*/
+
 
         // Specify transit route stops to add on network routes of S60
         List<TransitRouteStop> transitRouteStopsDirFilderstadt = Arrays.asList(
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005201.1", TransitStopFacility.class)), 120, 120),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8003622.2", TransitStopFacility.class)), 540, 540),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001650.1", TransitStopFacility.class)), 720, 720),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005768.1", TransitStopFacility.class)), 900, 900),
-               tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001984.1", TransitStopFacility.class)), 1020, 1020));
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001055.6", TransitStopFacility.class)), 240, 420),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005201.1", TransitStopFacility.class)), 540, 540),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8003622.2", TransitStopFacility.class)), 960, 960),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001650.1", TransitStopFacility.class)), 1140, 1140),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005768.1", TransitStopFacility.class)), 1320, 1380),
+               tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001984.1", TransitStopFacility.class)), 1500, 1500));
         List<TransitRouteStop> transitRouteStopsDirBoeblingen = Arrays.asList(
                 tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001984", TransitStopFacility.class)), 0, 0),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005768", TransitStopFacility.class)), 120, 120),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001650", TransitStopFacility.class)), 300, 300),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8003622", TransitStopFacility.class)), 480, 480),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005201.2", TransitStopFacility.class)), 900, 900),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001055.4", TransitStopFacility.class)), 1080, 1080));
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005768", TransitStopFacility.class)), 120, 180),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001650", TransitStopFacility.class)), 360, 360),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8003622", TransitStopFacility.class)), 540, 540),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005201.2", TransitStopFacility.class)), 960, 960),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001055.4", TransitStopFacility.class)), 1080, 1260));
+
 
         // Extend S60
-        TransitLine lineS60 = tS.getTransitLines().get(Id.create("S 60 - 1", TransitLine.class));
+        utils.extendTransitLine(
+                "S 60 - 1",
+                transitRouteStopsDirFilderstadt,
+                transitRouteStopsDirBoeblingen
+        );
+
+
+
+/*        TransitLine lineS60 = tS.getTransitLines().get(Id.create("S 60 - 1", TransitLine.class));
         List<TransitRoute> routesToAdd = new ArrayList<>();
         List<TransitRoute> routesToRemove = new ArrayList<>();
 
@@ -113,8 +133,8 @@ public class CreateS60Extension {
 
                 newRoute = tS.getFactory().createTransitRoute(
                         oldRoute.getId(),
-                        utils.extendNetworkRoute(oldRoute.getRoute().getLinkIds(), linksToAddDirFilderstadt, false),
-                        utils.extendRouteStopList(oldRoute.getStops(), transitRouteStopsDirFilderstadt, false),
+                        utils.extendNetworkRoute(oldRoute.getRoute(), linksToAddDirFilderstadt, true),
+                        utils.extendRouteStopList(oldRoute.getStops(), transitRouteStopsDirFilderstadt, true),
                         TransportMode.pt);
 
                 for (Departure departure: oldRoute.getDepartures().values()){
@@ -129,8 +149,8 @@ public class CreateS60Extension {
 
                 newRoute = tS.getFactory().createTransitRoute(
                         oldRoute.getId(),
-                        utils.extendNetworkRoute(oldRoute.getRoute().getLinkIds(), linksToAddDirBoeblingen, true),
-                        utils.extendRouteStopList(oldRoute.getStops(), transitRouteStopsDirBoeblingen, true),
+                        utils.extendNetworkRoute(oldRoute.getRoute(), linksToAddDirBoeblingen, false),
+                        utils.extendRouteStopList(oldRoute.getStops(), transitRouteStopsDirBoeblingen, false),
                         TransportMode.pt);
 
                 for (Departure departure: oldRoute.getDepartures().values()){
@@ -160,6 +180,13 @@ public class CreateS60Extension {
         for (TransitRoute newRoute: routesToAdd){
             lineS60.addRoute(newRoute);
         }
+
+        log.info("---!!!---");
+        log.info("NEW ROUTES");
+
+        for (TransitRoute route: lineS60.getRoutes().values()){
+            log.info(route.getId().toString());
+        }*/
 
     }
 
