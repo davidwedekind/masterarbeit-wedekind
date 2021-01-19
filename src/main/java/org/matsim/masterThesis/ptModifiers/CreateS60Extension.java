@@ -14,11 +14,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.pt.transitSchedule.api.*;
 import org.matsim.pt.utils.TransitScheduleValidator;
-
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author dwedekind
@@ -71,8 +67,8 @@ public class CreateS60Extension {
         Node stopGoldberg = network.getNodes().get(Id.createNodeId("tr8005201"));
         Node stopLeinfelden = network.getNodes().get(Id.createNodeId("tr8003622"));
 
-        Link linkTrNew0001 = utils.createLink("trNew0001", stopGoldberg, stopLeinfelden, TransportMode.train);
-        Link linkTrNew0002 = utils.createLink("trNew0002", stopLeinfelden, stopGoldberg, TransportMode.train);
+        Link linkTrNew0001 = utils.createLink(Id.createLinkId("trNew0001"), stopGoldberg, stopLeinfelden, TransportMode.train);
+        Link linkTrNew0002 = utils.createLink(Id.createLinkId("trNew0002"), stopLeinfelden, stopGoldberg, TransportMode.train);
 
         network.addLink(linkTrNew0001);
         network.addLink(linkTrNew0002);
@@ -80,20 +76,22 @@ public class CreateS60Extension {
 
         // Create additional stop facilities
         TransitStopFacility stopFacilityTr8003622_1 = tS.getFacilities().get(Id.create("8003622.1", TransitStopFacility.class));
-        TransitStopFacility stopFacilityTr8003622_2 = utils.createStopFacility("8003622.2", stopFacilityTr8003622_1.getCoord(), linkTrNew0001.getId(), stopFacilityTr8003622_1.getName(), stopFacilityTr8003622_1.getStopAreaId());
+        TransitStopFacility stopFacilityTr8003622_2 = utils.createStopFacility(
+                Id.create("8003622.2", TransitStopFacility.class),
+                stopFacilityTr8003622_1.getCoord(),
+                linkTrNew0001.getId(),
+                stopFacilityTr8003622_1.getName(),
+                stopFacilityTr8003622_1.getStopAreaId());
 
         TransitStopFacility stopFacilityTr8005201_0 = tS.getFacilities().get(Id.create("8005201", TransitStopFacility.class));
-        TransitStopFacility stopFacilityTr8005201_2 = utils.createStopFacility("8005201.2", stopFacilityTr8005201_0.getCoord(), linkTrNew0002.getId(), stopFacilityTr8005201_0.getName(), stopFacilityTr8005201_0.getStopAreaId());
+        TransitStopFacility stopFacilityTr8005201_2 = utils.createStopFacility(Id.create(
+                "8005201.2", TransitStopFacility.class), stopFacilityTr8005201_0.getCoord(),
+                linkTrNew0002.getId(),
+                stopFacilityTr8005201_0.getName(),
+                stopFacilityTr8005201_0.getStopAreaId());
 
         tS.addStopFacility(stopFacilityTr8003622_2);
         tS.addStopFacility(stopFacilityTr8005201_2);
-
-
-/*        // Specify links to add on network routes of S60
-        List<Id<Link>> linksToAddDirFilderstadt = Stream.of("tr672168", "trNew0001", "tr673031", "tr673032", "tr673033")
-                .map((Function<String, Id<Link>>) Id::createLinkId).collect(Collectors.toList());
-        List<Id<Link>> linksToAddDirBoeblingen = Stream.of("tr672997", "tr672998", "tr672999", "tr673000", "trNew0002", "tr672157")
-                .map((Function<String, Id<Link>>) Id::createLinkId).collect(Collectors.toList());*/
 
 
         // Specify transit route stops to add on network routes of S60
@@ -116,77 +114,9 @@ public class CreateS60Extension {
         // Extend S60
         utils.extendTransitLine(
                 "S 60 - 1",
-                transitRouteStopsDirFilderstadt,
-                transitRouteStopsDirBoeblingen
+                transitRouteStopsDirBoeblingen,
+                transitRouteStopsDirFilderstadt
         );
-
-
-
-/*        TransitLine lineS60 = tS.getTransitLines().get(Id.create("S 60 - 1", TransitLine.class));
-        List<TransitRoute> routesToAdd = new ArrayList<>();
-        List<TransitRoute> routesToRemove = new ArrayList<>();
-
-        for (TransitRoute oldRoute: lineS60.getRoutes().values()){
-            TransitRoute newRoute;
-            if (oldRoute.getStops().get(oldRoute.getStops().size() - 1).getStopFacility().getId()
-                    .equals(Id.create("8001055.6", TransitStopFacility.class))){
-
-                newRoute = tS.getFactory().createTransitRoute(
-                        oldRoute.getId(),
-                        utils.extendNetworkRoute(oldRoute.getRoute(), linksToAddDirFilderstadt, true),
-                        utils.extendRouteStopList(oldRoute.getStops(), transitRouteStopsDirFilderstadt, true),
-                        TransportMode.pt);
-
-                for (Departure departure: oldRoute.getDepartures().values()){
-                    newRoute.addDeparture(departure);
-                }
-
-            } else if (oldRoute.getStops().get(0).getStopFacility().getId()
-                    .equals(Id.create("8001055.3", TransitStopFacility.class))){
-
-                final double offSet = transitRouteStopsDirBoeblingen.get(transitRouteStopsDirBoeblingen.size() - 1)
-                        .getDepartureOffset().seconds();
-
-                newRoute = tS.getFactory().createTransitRoute(
-                        oldRoute.getId(),
-                        utils.extendNetworkRoute(oldRoute.getRoute(), linksToAddDirBoeblingen, false),
-                        utils.extendRouteStopList(oldRoute.getStops(), transitRouteStopsDirBoeblingen, false),
-                        TransportMode.pt);
-
-                for (Departure departure: oldRoute.getDepartures().values()){
-                    if ((departure.getDepartureTime() - offSet) > 0){
-                        Departure newDeparture = tS.getFactory().createDeparture(departure.getId(), departure.getDepartureTime() - offSet);
-                        newDeparture.setVehicleId(departure.getVehicleId());
-                        newRoute.addDeparture(newDeparture);
-
-                    }
-
-                }
-
-            } else {
-                continue;
-
-            }
-
-            routesToRemove.add(oldRoute);
-            routesToAdd.add(newRoute);
-
-        }
-
-        for (TransitRoute oldRoute: routesToRemove){
-            lineS60.removeRoute(oldRoute);
-        }
-
-        for (TransitRoute newRoute: routesToAdd){
-            lineS60.addRoute(newRoute);
-        }
-
-        log.info("---!!!---");
-        log.info("NEW ROUTES");
-
-        for (TransitRoute route: lineS60.getRoutes().values()){
-            log.info(route.getId().toString());
-        }*/
 
     }
 

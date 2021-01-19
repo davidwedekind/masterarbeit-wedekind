@@ -10,6 +10,7 @@ import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
+import org.matsim.core.utils.misc.OptionalTime;
 import org.matsim.pt.transitSchedule.api.*;
 import playground.vsp.andreas.utils.pt.TransitScheduleCleaner;
 
@@ -33,7 +34,7 @@ public class PtUtils {
 
     }
 
-    //ToDo Last Link first link
+
     public void extendTransitLine(String lineIdAsString, List<TransitRouteStop> stopSequenceA, List<TransitRouteStop> stopSequenceB){
         TransitLine line = tS.getTransitLines().get(Id.create(lineIdAsString, TransitLine.class));
         List<TransitRoute> routesToAdd = new ArrayList<>();
@@ -59,11 +60,11 @@ public class PtUtils {
                 // CASE 1 - Existing Route is prolonged in the end with stopSequenceA
 
                 newNetworkRoute = extendNetworkRoute(
-                        getAllLinkIds(oldRoute).subList(0, oldRoute.getRoute().getLinkIds().size() - 2),
+                        getAllLinkIds(oldRoute).subList(0, getAllLinkIds(oldRoute).size() - 1),
                         linkSequenceA
                 );
                 newRouteStopSequence = extendRouteStopList(
-                        oldRoute.getStops().subList(0, oldRoute.getStops().size() - 2),
+                        oldRoute.getStops().subList(0, oldRoute.getStops().size() - 1),
                         stopSequenceA
                 );
                 departures = copyDepartures(oldRoute.getDepartures(), 0.);
@@ -73,40 +74,43 @@ public class PtUtils {
                 // CASE 2 - Existing Route is prolonged in the end with stopSequenceB
 
                 newNetworkRoute = extendNetworkRoute(
-                        getAllLinkIds(oldRoute).subList(0, oldRoute.getRoute().getLinkIds().size() - 2),
+                        getAllLinkIds(oldRoute).subList(0, getAllLinkIds(oldRoute).size() - 1),
                         linkSequenceB
                 );
                 newRouteStopSequence = extendRouteStopList(
-                        oldRoute.getStops().subList(0, oldRoute.getStops().size() - 2),
+                        oldRoute.getStops().subList(0, oldRoute.getStops().size() - 1),
                         stopSequenceB
                 );
                 departures = copyDepartures(oldRoute.getDepartures(), 0.);
+
 
             } else if (determineBaseStop(fstStop).equals(determineBaseStop(stopSequenceA.get(stopSequenceA.size() - 1)))){
                 // CASE 3 - Existing Route is prolonged in the beginning with stopSequenceA
 
                 newNetworkRoute = extendNetworkRoute(
                         linkSequenceA,
-                        getAllLinkIds(oldRoute).subList(1, oldRoute.getRoute().getLinkIds().size() - 1)
+                        getAllLinkIds(oldRoute).subList(1, getAllLinkIds(oldRoute).size())
                 );
                 newRouteStopSequence = extendRouteStopList(
                         stopSequenceA,
-                        oldRoute.getStops().subList(1, oldRoute.getStops().size() - 1)
+                        oldRoute.getStops().subList(1, oldRoute.getStops().size())
                 );
                 departures = copyDepartures(oldRoute.getDepartures(), - (stopSequenceA.get(stopSequenceA.size() - 1).getDepartureOffset().seconds()) );
+
 
             } else if (determineBaseStop(fstStop).equals(determineBaseStop(stopSequenceB.get(stopSequenceB.size() - 1)))) {
                 // CASE 4 - Existing Route is prolonged in the beginning with stopSequenceB
 
                 newNetworkRoute = extendNetworkRoute(
                         linkSequenceB,
-                        getAllLinkIds(oldRoute).subList(1, oldRoute.getRoute().getLinkIds().size() - 1)
+                        getAllLinkIds(oldRoute).subList(1, getAllLinkIds(oldRoute).size())
                 );
                 newRouteStopSequence = extendRouteStopList(
                         stopSequenceB,
-                        oldRoute.getStops().subList(1, oldRoute.getStops().size() - 1)
+                        oldRoute.getStops().subList(1, oldRoute.getStops().size())
                 );
                 departures = copyDepartures(oldRoute.getDepartures(), - (stopSequenceA.get(stopSequenceB.size() - 1).getDepartureOffset().seconds()) );
+
 
             } else {
                 continue;
@@ -191,14 +195,15 @@ public class PtUtils {
 
     private List<TransitRouteStop> extendRouteStopList(List<TransitRouteStop> transitRouteStopsPt1, List<TransitRouteStop> transitRouteStopsPt2){
         List<TransitRouteStop> newRouteStopSequence = new ArrayList<>(transitRouteStopsPt1);
-        double offSet = transitRouteStopsPt1.get(transitRouteStopsPt1.size() - 1).getDepartureOffset().seconds()
+        final double offSet = transitRouteStopsPt1.get(transitRouteStopsPt1.size() - 1).getDepartureOffset().seconds()
                 + transitRouteStopsPt2.get(0).getArrivalOffset().seconds();
+        
 
         List<TransitRouteStop> adjRouteStopsPt2 = transitRouteStopsPt2.stream()
                 .map(transitRouteStop -> tS.getFactory().createTransitRouteStop(
                         transitRouteStop.getStopFacility(),
-                        transitRouteStop.getArrivalOffset().seconds() + offSet,
-                        transitRouteStop.getDepartureOffset().seconds() + offSet
+                        getV0OrV1(transitRouteStop.getArrivalOffset(), transitRouteStop.getDepartureOffset()) + offSet,
+                        getV0OrV1(transitRouteStop.getDepartureOffset(), transitRouteStop.getArrivalOffset()) + offSet
                 ))
                 .collect(Collectors.toList());
 
@@ -213,75 +218,17 @@ public class PtUtils {
     }
 
 
-    public NetworkRoute extendNetworkRoute(NetworkRoute oldRoute, List<Id<Link>> linksToAdd, boolean atTheEnd) {
-        List<Id<Link>> newRouteLinks = new ArrayList<>();
-
-        if (atTheEnd) {
-            newRouteLinks.add(oldRoute.getStartLinkId());
-            newRouteLinks.addAll(oldRoute.getLinkIds());
-            newRouteLinks.add(oldRoute.getEndLinkId());
-            newRouteLinks.addAll(linksToAdd);
-
+    private double getV0OrV1(OptionalTime v0, OptionalTime v1){
+        if (v0.isDefined()){
+            return v0.seconds();
         } else {
-            newRouteLinks.addAll(linksToAdd);
-            // Skip start link as it is also replaced
-            newRouteLinks.addAll(oldRoute.getLinkIds());
-            newRouteLinks.add(oldRoute.getEndLinkId());
-
+            return v1.seconds();
         }
-
-        return RouteUtils.createNetworkRoute(newRouteLinks);
-
     }
 
 
-    public List<TransitRouteStop> extendRouteStopList(List<TransitRouteStop> transitRouteStops, List<TransitRouteStop> transitRouteStopsToAdd, boolean atTheEnd){
-        final double offSet;
-        List<TransitRouteStop> newTransitRouteStops = new ArrayList<>();
-        List<TransitRouteStop> adjTransitRouteStops = new ArrayList<>();
-
-        if (atTheEnd) {
-
-            for ( int i = 0; i < transitRouteStops.size()-1; i++ ){
-                adjTransitRouteStops.add(transitRouteStops.get(i));
-            }
-
-            TransitRouteStop stop = tS.getFactory().createTransitRouteStop(transitRouteStops.get(transitRouteStops.size() - 1).getStopFacility(), transitRouteStops.get(transitRouteStops.size() - 1).getArrivalOffset().seconds(), transitRouteStops.get(transitRouteStops.size() - 1).getArrivalOffset().seconds() + 180);
-            adjTransitRouteStops.add(stop);
-            offSet = adjTransitRouteStops.get(adjTransitRouteStops.size() - 1).getDepartureOffset().seconds();
-
-        } else {
-            offSet = 0.;
-        }
-
-        List<TransitRouteStop> newTransitRouteStopsToAdd = transitRouteStopsToAdd.stream()
-                .map(routeStop -> tS.getFactory().createTransitRouteStop(
-                        routeStop.getStopFacility(),
-                        routeStop.getArrivalOffset().seconds() + offSet,
-                        routeStop.getDepartureOffset().seconds() + offSet
-                ))
-                .collect(Collectors.toList());
-
-        if (atTheEnd) {
-            newTransitRouteStops.addAll(adjTransitRouteStops);
-            newTransitRouteStops.addAll(newTransitRouteStopsToAdd);
-
-
-        } else {
-            List<TransitRouteStop> adjTransitRouteStop = new ArrayList<>(transitRouteStops);
-            adjTransitRouteStop.remove(0);
-            newTransitRouteStops.addAll(newTransitRouteStopsToAdd);
-            newTransitRouteStops.addAll(adjTransitRouteStop);
-
-
-
-        }
-
-        return newTransitRouteStops;
-    }
-
-    public Link createLink(String id, Node from, Node to, String ptMode) {
-        Link link = network.getFactory().createLink(Id.createLinkId(id), from, to);
+    public Link createLink(Id<Link> id, Node from, Node to, String ptMode) {
+        Link link = network.getFactory().createLink(id, from, to);
         link.setAllowedModes(new HashSet<>(Collections.singletonList(ptMode)));
         link.setCapacity(999999);
         link.setLength(NetworkUtils.getEuclideanDistance(link.getFromNode().getCoord(), link.getToNode().getCoord()));
@@ -290,9 +237,10 @@ public class PtUtils {
 
     }
 
-    public TransitStopFacility createStopFacility(String id, Coord coord, Id<Link> linkId, String name, Id<TransitStopArea> stopAreaId){
-        TransitStopFacility stopFacility = tS.getFactory().createTransitStopFacility(Id.create(id,
-                TransitStopFacility.class),
+
+    public TransitStopFacility createStopFacility(Id<TransitStopFacility> id, Coord coord, Id<Link> linkId, String name, Id<TransitStopArea> stopAreaId){
+        TransitStopFacility stopFacility = tS.getFactory().createTransitStopFacility(
+                id,
                 coord,
                 false);
         stopFacility.setLinkId(linkId);
@@ -302,11 +250,13 @@ public class PtUtils {
 
     }
 
+
     public void removeLine(String transitLineName){
         TransitLine line = tS.getTransitLines().get(Id.create(transitLineName, TransitLine.class));
         tS.removeTransitLine(line);
 
     }
+
 
     public void shortenLine(String transitLineName, List<String> stopsToCancel){
         TransitLine line = tS.getTransitLines().get(Id.create(transitLineName, TransitLine.class));
@@ -334,7 +284,7 @@ public class PtUtils {
     }
 
 
-    public TransitRoute copyAndAdjustRoute(TransitRoute oldRoute, List<String> stopsToCancel) {
+    private TransitRoute copyAndAdjustRoute(TransitRoute oldRoute, List<String> stopsToCancel) {
 
         // Remove stops2Cancel from Route only -> more sophisticated would be also to adjust also network route, stops etc...
         // Filter stops: Do not keep keep stops to be canceled
@@ -358,68 +308,5 @@ public class PtUtils {
         return newRoute;
 
     }
-
-
-    public void extendLine(String transitLineName, List<Id<TransitStopFacility>> stops2Add, Map<Id<TransitStopFacility>, Double> departureOffsets, Map<Id<TransitStopFacility>, Double> arrivalOffsets) {
-        TransitLine line = tS.getTransitLines().get(Id.create(transitLineName, TransitLine.class));
-        // network extension
-
-        TransitScheduleCleaner cleaner = new TransitScheduleCleaner();
-
-        //transitSchedule.getFactory().createTransitStopFacility();
-
-
-
-        // transit schedule extension
-        for (TransitRoute oldRoute : line.getRoutes().values()) {
-            List<TransitRouteStop> newStops;
-
-            if (oldRoute.getStops().get(oldRoute.getStops().size() - 1).getStopFacility().getId().equals(stops2Add.get(0))) {
-                // Extension at the end of oldRoute
-
-
-                newStops = oldRoute.getStops();
-
-
-
-
-                for (Id<TransitStopFacility> stopFacilityId: stops2Add){
-                    //network.addNode(network.getFactory().createNode());
-                    //network.addLink(network.getFactory().createLink());
-                }
-
-            } else if (oldRoute.getStops().get(0).getStopFacility().getId().equals(stops2Add.get(stops2Add.size() - 1))) {
-                // Extension at the beginning of oldRoute
-
-                newStops = oldRoute.getStops();
-
-            } else {
-                // Route does not connect with extension
-                break;
-
-            }
-
-
-            TransitRoute newRoute = tS.getFactory().createTransitRoute(
-                    oldRoute.getId(),
-                    oldRoute.getRoute(),
-                    newStops,
-                    oldRoute.getTransportMode());
-
-            line.removeRoute(oldRoute);
-            line.addRoute(newRoute);
-
-        }
-    }
-
-/*        var network = NetworkUtils.createNetwork();
-        var inputNetwork = input.inputNetwork;
-        var outputNetwork = NetworkUtils.createNetwork().getLinks().values().stream()
-                .map(link -> {
-                    var newLink = network.getFactory().createLink(link.getId(), link.getFromNode(), link.getToNode());
-                    newLink.setFreespeed(link.getFreespeed());
-                    return newLink;
-                })
-                .collect(NetworkUtils.getCollector());*/
 
 }
