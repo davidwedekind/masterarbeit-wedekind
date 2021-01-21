@@ -1,12 +1,5 @@
 package org.matsim.masterThesis.run;
-
-import graphql.AssertException;
-import org.apache.commons.lang3.EnumUtils;
 import org.matsim.core.config.ReflectiveConfigGroup;
-import org.matsim.core.utils.collections.CollectionUtils;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author dwedekind
@@ -14,23 +7,26 @@ import java.util.stream.Collectors;
 
 public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConfigGroup {
     private static final String GROUP_NAME = "stuttgartMasterThesisExperimental";
-
     private static final String PARKING_ZONE_SHAPE_FILE = "parkingZoneShapeFile";
     private static final String FARE_ZONE_SHAPE_FILE = "fareZoneShapeFile";
     private static final String REDUCED_CAR_INFRASTRUCTURE_ZONES_SHAPE_FILE = "reducedCarInfrastructureZonesShapeFile";
-    private static final String REDUCED_CAR_INFRASTRUCTURE = "reducedCarInfrastructure";
     private static final String REDUCED_CAR_INFRASTRUCTURE_FREESPEED_THRESHOLD = "reducedCarInfrastructureFreespeedThreshold";
     private static final String REDUCED_CAR_INFRASTRUCTURE_CAPACITY_THRESHOLD = "reducedCarInfrastructureCapacityThreshold";
-    private static final String PT_NETWORK_EXTENSIONS = "ptNetworkExtensions";
+    private static final String U6_EXTENSION_SHAPEFILE = "u6ExtensionShapeFile";
+    private static final String S60_EXTENSION = "s60Extension";
+    private static final String SUPERSHUTTLE_EXTENSION = "s60Extension";
+    private static final String FLUGHAFEN_CONNECTION_ALIGNMENT = "flughafenConnectionAlignment";
 
-
-    private String parkingZoneShapeFile = "parkingZones.shp";
-    private String fareZoneShapeFile = "fareZones.shp";
-    private String reducedCarInfrastructureShapeFile = "reducedCarInfrastructureZones.shp";
-    private boolean reducedCarInfrastructure = false;
+    private String parkingZoneShapeFile = "parkingZones_bc.shp";
+    private String fareZoneShapeFile = "fareZones_bc.shp";
+    private String reducedCarInfrastructureShapeFile = "areas_w_closures.shp";
     private double reducedCarInfrastructureFreespeedThreshold = 10.;
     private double reducedCarInfrastructureCapacityThreshold = 650.;
-    private final Set<PtExtension> ptNetworkExtensions = new HashSet<>();
+    private String u6ExtensionShapeFile = "u6ExtensionShapeFile.shp";
+    private boolean s60Extension = false;
+    private boolean supershuttleExtension = false;
+    private boolean flughafenConnectionAlignment = false;
+
 
     public StuttgartMasterThesisExperimentalConfigGroup(){
         super(GROUP_NAME);
@@ -66,16 +62,6 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
         this.reducedCarInfrastructureShapeFile = reducedCarInfrastructureShapeFile;
     }
 
-    @StringGetter(REDUCED_CAR_INFRASTRUCTURE)
-    public boolean getReducedCarInfrastructure() {
-        return reducedCarInfrastructure;
-    }
-
-    @StringSetter(REDUCED_CAR_INFRASTRUCTURE)
-    public void setReducedCarInfrastructure(boolean reducedCarInfrastructure) {
-        this.reducedCarInfrastructure = reducedCarInfrastructure;
-    }
-
     @StringGetter(REDUCED_CAR_INFRASTRUCTURE_FREESPEED_THRESHOLD)
     public double getReducedCarInfrastructureFreespeedThreshold() {
         return reducedCarInfrastructureFreespeedThreshold;
@@ -96,41 +82,71 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
         this.reducedCarInfrastructureCapacityThreshold = reducedCarInfrastructureCapacityThreshold;
     }
 
-    @StringGetter(PT_NETWORK_EXTENSIONS)
-    public String getDeterministicPtNetworkExtensions() {
-        return this.ptNetworkExtensions.stream().map(Enum::toString).collect(Collectors.joining(","));
+    @StringGetter(U6_EXTENSION_SHAPEFILE)
+    public String getU6ExtensionShapeFile() {
+        return u6ExtensionShapeFile;
     }
 
-    public Set<PtExtension> getPtNetworkExtensions(){
-        return this.ptNetworkExtensions;
-    }
-
-    @StringSetter(PT_NETWORK_EXTENSIONS)
-    public void setPtNetworkExtensions(String ptNetworkExtensions) {
-        Set<String> ptNetworkExtensionsSet = CollectionUtils.stringToSet(ptNetworkExtensions);
-        Set<PtExtension> newPtNetworkExtensionsSet = ptNetworkExtensionsSet.stream()
-                .map(extension -> {
-                    if (EnumUtils.isValidEnum(PtExtension.class, extension)) {
-                        return PtExtension.valueOf(extension);
-                    } else {
-                        throw new AssertException("There is no pt network extension with name: " + extension);
-                    }
-                })
-                .collect(Collectors.toSet());
-    }
-
-    public void setPtNetworkExtensions(Set<PtExtension> ptNetworkExtensions){
-        this.ptNetworkExtensions.clear();
-        this.ptNetworkExtensions.addAll(ptNetworkExtensions);
+    @StringSetter(U6_EXTENSION_SHAPEFILE)
+    public void setU6ExtensionShapeFile(String u6ExtensionShapeFile) {
+        this.u6ExtensionShapeFile = u6ExtensionShapeFile;
     }
 
 
-    enum PtExtension {
-        U5,
-        U6,
-        S60
+
+
+    @StringGetter(S60_EXTENSION)
+    public String getS60ExtensionAsString() {
+        return String.valueOf(getFlughafenConnectionAlignment());
     }
 
+    public boolean getS60Extension() {
+        return s60Extension;
+    }
 
+    @StringSetter(S60_EXTENSION)
+    public void setS60Extension(String s60Extension) {
+        setS60Extension(Boolean.parseBoolean(s60Extension));
+    }
+
+    public void setS60Extension(boolean s60Extension) {
+        this.s60Extension = s60Extension;
+    }
+
+    @StringGetter(SUPERSHUTTLE_EXTENSION)
+    public String getSupershuttleExtensionAsString() {
+        return String.valueOf(getSupershuttleExtension());
+    }
+
+    public boolean getSupershuttleExtension() {
+        return supershuttleExtension;
+    }
+
+    @StringSetter(SUPERSHUTTLE_EXTENSION)
+    public void setSupershuttleExtension(String supershuttleExtension) {
+        setSupershuttleExtension(Boolean.parseBoolean(supershuttleExtension));
+    }
+
+    public void setSupershuttleExtension(boolean supershuttleExtension) {
+        this.supershuttleExtension = supershuttleExtension;
+    }
+
+    @StringGetter(FLUGHAFEN_CONNECTION_ALIGNMENT)
+    public String getFlughafenConnectionAlignmentAsString() {
+        return String.valueOf(getFlughafenConnectionAlignment());
+    }
+
+    public boolean getFlughafenConnectionAlignment() {
+        return flughafenConnectionAlignment;
+    }
+
+    @StringSetter(FLUGHAFEN_CONNECTION_ALIGNMENT)
+    public void setFlughafenConnectionAlignment(String flughafenConnectionAlignment) {
+        setFlughafenConnectionAlignment(Boolean.parseBoolean(flughafenConnectionAlignment));
+    }
+
+    public void setFlughafenConnectionAlignment(boolean flughafenConnectionAlignment) {
+        this.flughafenConnectionAlignment = flughafenConnectionAlignment;
+    }
 
 }
