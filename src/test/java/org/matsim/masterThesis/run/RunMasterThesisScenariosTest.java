@@ -12,8 +12,7 @@ public class RunMasterThesisScenariosTest {
     @Ignore
     public void testRunnerWithAllExtensions() {
 
-        String configInput = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/00_preparation/templates/stuttgart-v1.0-1pct.config_xxx.xml";
-        RunMasterThesisScenarios.main(new String[]{configInput});
+
 
     }
 

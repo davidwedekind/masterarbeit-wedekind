@@ -51,6 +51,9 @@ public class BanCarsFromSmallerStreets {
     public void run(String shapeFilePath, double freespeedThreshold, double capacityThreshold){
         final Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(shapeFilePath);
 
+
+        // ToDo: Allow multiple filter criteria and read filter criteria from shape files instead of fixed from config
+
         log.info("Start removing mode 'car and ride' from links that are located in banZones and undergo threshold value...");
 
         network.getLinks().values().parallelStream()
