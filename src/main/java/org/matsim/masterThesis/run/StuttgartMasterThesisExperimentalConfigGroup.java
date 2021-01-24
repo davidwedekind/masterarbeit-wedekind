@@ -10,19 +10,15 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
     private static final String PARKING_ZONE_SHAPE_FILE = "parkingZoneShapeFile";
     private static final String FARE_ZONE_SHAPE_FILE = "fareZoneShapeFile";
     private static final String REDUCED_CAR_INFRASTRUCTURE_ZONES_SHAPE_FILE = "reducedCarInfrastructureZonesShapeFile";
-    private static final String REDUCED_CAR_INFRASTRUCTURE_FREESPEED_THRESHOLD = "reducedCarInfrastructureFreespeedThreshold";
-    private static final String REDUCED_CAR_INFRASTRUCTURE_CAPACITY_THRESHOLD = "reducedCarInfrastructureCapacityThreshold";
     private static final String U6_EXTENSION_SHAPEFILE = "u6ExtensionShapeFile";
     private static final String S60_EXTENSION = "s60Extension";
-    private static final String SUPERSHUTTLE_EXTENSION = "s60Extension";
+    private static final String SUPERSHUTTLE_EXTENSION = "supershuttleExtension";
     private static final String FLUGHAFEN_CONNECTION_ALIGNMENT = "flughafenConnectionAlignment";
 
     private String parkingZoneShapeFile = "parkingZones_bc.shp";
     private String fareZoneShapeFile = "fareZones_bc.shp";
-    private String reducedCarInfrastructureShapeFile = "areas_w_closures.shp";
-    private double reducedCarInfrastructureFreespeedThreshold = 10.;
-    private double reducedCarInfrastructureCapacityThreshold = 650.;
-    private String u6ExtensionShapeFile = "u6ExtensionShapeFile.shp";
+    private String reducedCarInfrastructureShapeFile = null;
+    private String u6ExtensionShapeFile = null;
     private boolean s60Extension = false;
     private boolean supershuttleExtension = false;
     private boolean flughafenConnectionAlignment = false;
@@ -62,26 +58,6 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
         this.reducedCarInfrastructureShapeFile = reducedCarInfrastructureShapeFile;
     }
 
-    @StringGetter(REDUCED_CAR_INFRASTRUCTURE_FREESPEED_THRESHOLD)
-    public double getReducedCarInfrastructureFreespeedThreshold() {
-        return reducedCarInfrastructureFreespeedThreshold;
-    }
-
-    @StringSetter(REDUCED_CAR_INFRASTRUCTURE_FREESPEED_THRESHOLD)
-    public void setReducedCarInfrastructureFreespeedThreshold(double reducedCarInfrastructureFreespeedThreshold) {
-        this.reducedCarInfrastructureFreespeedThreshold = reducedCarInfrastructureFreespeedThreshold;
-    }
-
-    @StringGetter(REDUCED_CAR_INFRASTRUCTURE_CAPACITY_THRESHOLD)
-    public double getReducedCarInfrastructureCapacityThreshold() {
-        return reducedCarInfrastructureCapacityThreshold;
-    }
-
-    @StringSetter(REDUCED_CAR_INFRASTRUCTURE_CAPACITY_THRESHOLD)
-    public void setReducedCarInfrastructureCapacityThreshold(double reducedCarInfrastructureCapacityThreshold) {
-        this.reducedCarInfrastructureCapacityThreshold = reducedCarInfrastructureCapacityThreshold;
-    }
-
     @StringGetter(U6_EXTENSION_SHAPEFILE)
     public String getU6ExtensionShapeFile() {
         return u6ExtensionShapeFile;
@@ -91,9 +67,6 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
     public void setU6ExtensionShapeFile(String u6ExtensionShapeFile) {
         this.u6ExtensionShapeFile = u6ExtensionShapeFile;
     }
-
-
-
 
     @StringGetter(S60_EXTENSION)
     public String getS60ExtensionAsString() {

@@ -61,13 +61,15 @@ public class RunMasterThesisScenarios {
                 thesisExpConfigGroup.getParkingZoneShapeFile());
 
 
+        // ToDo: Read threshholds for each closure area individually from shape file
+
         // -- BAN CARS FROM LIVING STREETS --
         // If measure 'reducedCarInfrastructure' is switched on, then 'BanCarsFromSmallerStreets'
         if (! thesisExpConfigGroup.getReducedCarInfrastructureShapeFile().isEmpty()){
             new BanCarsFromSmallerStreets(scenario.getNetwork()).run(
                     thesisExpConfigGroup.getReducedCarInfrastructureShapeFile(),
-                    thesisExpConfigGroup.getReducedCarInfrastructureFreespeedThreshold(),
-                    thesisExpConfigGroup.getReducedCarInfrastructureCapacityThreshold());
+                    10.,
+                    650.);
 
         }
 
