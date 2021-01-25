@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
  * @author dwedekind
  */
 
+// TODO: TEST IT !!!!!!
+
 public class BanCarsFromSmallerStreets {
     private static final Logger log = Logger.getLogger(BanCarsFromSmallerStreets.class);
     private final Network network;
@@ -37,37 +39,54 @@ public class BanCarsFromSmallerStreets {
         JCommander.newBuilder().addObject(input).build().parse(args);
         log.info("Input network file: " + input.inputNetwork);
         log.info("Input shape file: " + input.shapeFilePath);
-        log.info("freespeedThreshold: " + input.freespeedThreshold);
-        log.info("capacityThreshold: " + input.capacityThreshold);
         log.info("Output network file: " + input.outputNetwork);
 
         Network network = NetworkUtils.readNetwork(input.inputNetwork);
-        new BanCarsFromSmallerStreets(network).run(input.shapeFilePath, input.freespeedThreshold, input.capacityThreshold);
+        new BanCarsFromSmallerStreets(network).run(input.shapeFilePath);
         new NetworkWriter(network).write(input.outputNetwork);
 
     }
 
 
-    public void run(String shapeFilePath, double freespeedThreshold, double capacityThreshold){
+    public void run(String shapeFilePath){
         final Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(shapeFilePath);
-
-
-        // ToDo: Allow multiple filter criteria and read filter criteria from shape files instead of fixed from config
 
         log.info("Start removing mode 'car and ride' from links that are located in banZones and undergo threshold value...");
 
         network.getLinks().values().parallelStream()
                 .filter(link -> !link.getId().toString().startsWith("tr"))
-                .filter(link -> features.stream()
-                        .map(simpleFeature -> (Geometry) simpleFeature.getDefaultGeometry())
-                        .anyMatch(geometry -> geometry.covers(MGC.coord2Point(link.getCoord()))))
-                .filter(link -> ((link.getFreespeed() < freespeedThreshold) && (link.getCapacity() < capacityThreshold)))
+                .filter(link -> {
+
+                    var feature = features.stream()
+                            .filter(simpleFeature -> ((Geometry) simpleFeature.getDefaultGeometry()).covers(MGC.coord2Point(link.getCoord())))
+                            .findFirst();
+
+                    if (feature.isPresent()) {
+                        var capacityThreshold_1 = feature.get().getAttribute("capacityThreshold_1");
+                        var freeSpeedThreshold_1 = feature.get().getAttribute("freeSpeedThreshold_1");
+                        var capacityThreshold_2 = feature.get().getAttribute("capacityThreshold_2");
+                        var freeSpeedThreshold_2 = feature.get().getAttribute("freeSpeedThreshold_2");
+
+                        if (capacityThreshold_1 != null && capacityThreshold_2 == null) {
+                            return !(link.getFreespeed() >= (double) freeSpeedThreshold_1) || !(link.getCapacity() >= (double) capacityThreshold_1);
+
+                        } else if (capacityThreshold_1 != null){
+                            return (!(link.getFreespeed() >= (double) freeSpeedThreshold_1) || !(link.getCapacity() >= (double) capacityThreshold_1)) &&
+                                    (!(link.getFreespeed() >= (double) freeSpeedThreshold_2) || !(link.getCapacity() >= (double) capacityThreshold_2));
+
+                        }
+
+                    }
+                    return false;
+
+                })
                 .forEach(link -> {
-                    var allowedModes = link.getAllowedModes().stream()
-                            .filter(mode -> !mode.equals(TransportMode.car) && !mode.equals(TransportMode.ride))
-                            .collect(Collectors.toSet());
-                    link.setAllowedModes(allowedModes);
-                });
+                            var allowedModes = link.getAllowedModes().stream()
+                                    .filter(mode -> !mode.equals(TransportMode.car) && !mode.equals(TransportMode.ride))
+                                    .collect(Collectors.toSet());
+                            link.setAllowedModes(allowedModes);
+                        });
+
 
         log.info("Links successfully adjusted!");
         log.info("Start cleaning the network for modes car and ride...");
@@ -88,12 +107,6 @@ public class BanCarsFromSmallerStreets {
 
         @Parameter(names = "-shapeFile")
         private String shapeFilePath;
-
-        @Parameter(names = "-freespeedThreshold")
-        private double freespeedThreshold;
-
-        @Parameter(names = "-capacityThreshold")
-        private double capacityThreshold;
 
         @Parameter(names = "-output")
         private String outputNetwork;

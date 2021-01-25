@@ -6,12 +6,17 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.masterThesis.BanCarsFromSmallerStreets;
 import org.matsim.masterThesis.ptModifiers.*;
+import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
 import org.matsim.stuttgart.run.StuttgartMasterThesisRunner;
 
-import java.util.Arrays;
-import java.util.List;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 /**
  * @author dwedekind
@@ -19,7 +24,7 @@ import java.util.List;
 
 public class RunMasterThesisScenarios {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws URISyntaxException {
         final Logger log = Logger.getLogger(RunMasterThesisScenarios.class);
 
         for (String arg : args) {
@@ -30,7 +35,8 @@ public class RunMasterThesisScenarios {
         // ------ CONFIG ------
 
         // ---- BASE CASE CONFIG PREPARATION ----
-        Config config = StuttgartMasterThesisRunner.prepareConfig(args, new StuttgartMasterThesisExperimentalConfigGroup()) ;
+        Config config = StuttgartMasterThesisRunner.prepareConfig(args, new StuttgartMasterThesisExperimentalConfigGroup());
+        Path configPath = Paths.get(config.getContext().toURI()).getParent();
 
         // ---- FURTHER CONFIG ADJUSTMENTS ----
 
@@ -57,19 +63,15 @@ public class RunMasterThesisScenarios {
         // Provide FareZoneShapeFile and ParkingZoneShapeFile to the scenario accordingly via the thesisExperimentalConfigGroup
         Scenario scenario = StuttgartMasterThesisRunner.prepareScenario(
                 config,
-                thesisExpConfigGroup.getFareZoneShapeFile(),
-                thesisExpConfigGroup.getParkingZoneShapeFile());
+                configPath.resolve(thesisExpConfigGroup.getFareZoneShapeFile()).toString(),
+                configPath.resolve(thesisExpConfigGroup.getParkingZoneShapeFile()).toString());
 
-
-        // ToDo: Read threshholds for each closure area individually from shape file
 
         // -- BAN CARS FROM LIVING STREETS --
         // If measure 'reducedCarInfrastructure' is switched on, then 'BanCarsFromSmallerStreets'
-        if (! thesisExpConfigGroup.getReducedCarInfrastructureShapeFile().isEmpty()){
+        if (thesisExpConfigGroup.getReducedCarInfrastructureShapeFile() != null){
             new BanCarsFromSmallerStreets(scenario.getNetwork()).run(
-                    thesisExpConfigGroup.getReducedCarInfrastructureShapeFile(),
-                    10.,
-                    650.);
+                    configPath.resolve(thesisExpConfigGroup.getReducedCarInfrastructureShapeFile()).toString());
 
         }
 
@@ -86,7 +88,7 @@ public class RunMasterThesisScenarios {
         }
 
         if (thesisExpConfigGroup.getU6ExtensionShapeFile() != null){
-            new CreateU6Extension().runExtensionModifications(scenario, thesisExpConfigGroup.getU6ExtensionShapeFile());
+            new CreateU6Extension().runExtensionModifications(scenario, configPath.resolve(thesisExpConfigGroup.getU6ExtensionShapeFile()).toString());
 
             PtUtils modifier = new PtUtils(scenario);
             modifier.removeLine("Bus 122 - 9");
@@ -104,24 +106,77 @@ public class RunMasterThesisScenarios {
         // ----------------------
 
 
+        // ---- PRINT OUT ALL SCENARIO RELEVANT SETTINGS TO LOG IN ONE SECTION ----
+        log.info("------------");
+        log.info("---- SCENARIO RELEVANT CONFIG PARAMS AND SETTINGS ----");
+        log.info("RunId: " + config.controler().getRunId());
+        log.info("PlansFile: " + config.plans().getInputFile());
 
-        // ---- PRINT OUT ALL SCENARIO RELEVANT SETTINGS TO LOG ----
-        log.info("---- SCENARIO RELEVANT SETTINGS ----");
+        // BIKE AND RIDE
+
         log.info("BIKE AND RIDE");
         log.info("Bike Teleported Mode Speed [m/s]: " + config.plansCalcRoute().getModeRoutingParams().get(TransportMode.bike).getTeleportedModeSpeed().toString());
 
+        IntermodalTripFareCompensatorsConfigGroup compensatorsCfg = ConfigUtils.addOrGetModule(config,
+                IntermodalTripFareCompensatorsConfigGroup.class);
+        OptionalDouble optionalTripCompensation = compensatorsCfg.getIntermodalTripFareCompensatorConfigGroups().stream()
+                .filter(var1 -> var1.getDrtModesAsString().equals(TransportMode.bike))
+                .mapToDouble(IntermodalTripFareCompensatorConfigGroup::getCompensationMoneyPerTrip)
+                .findFirst();
+        if (optionalTripCompensation.isPresent()) {
+            log.info("Bike compensation money per (intermodal) trip:" + optionalTripCompensation.getAsDouble());
 
-        log.info("Bike compensation money per (intermodal) trip:");
+        } else {
+            log.info("Bike compensation money per (intermodal) trip: 0");
+        }
 
-        //
+        log.info("Chain based modes: " + Arrays.toString(config.subtourModeChoice().getChainBasedModes()));
+
+
+        // FARES
+
+        log.info("FARES");
+        log.info("Fare Zone Shape File: " + thesisExpConfigGroup.getFareZoneShapeFile());
+        log.info("Fare Zone prices ... ");
+
+        PtFaresConfigGroup configFares = ConfigUtils.addOrGetModule(config,
+                PtFaresConfigGroup.class);
+
+        Map<Integer, Double> allFares = configFares.getFaresGroup().getAllFares();
+
+        for (Map.Entry<Integer, Double> fare: allFares.entrySet()){
+            log.info(String.format("Fare - %1$d zone(s): %2$f", fare.getKey(), fare.getValue()));
+        }
+
+
+        // PARKING
+
+        log.info("PARKING");
+        log.info("Parking Zone Shape File: " + thesisExpConfigGroup.getParkingZoneShapeFile());
+
+
+        // REDUCED STREET NETWORK
+
+        log.info("REDUCED STREET NETWORK");
+        log.info("Reduced street network Shape File: " + thesisExpConfigGroup.getReducedCarInfrastructureShapeFile());
+
+
+        // PT EXTENSION
+        log.info("PT EXTENSION");
+        log.info("S60 Extension: " + thesisExpConfigGroup.getS60Extension());
+        log.info("U6 Extension: " + (thesisExpConfigGroup.getU6ExtensionShapeFile() == null ? "false" : thesisExpConfigGroup.getU6ExtensionShapeFile()));
+        log.info("SuperShuttle Extension: " + (thesisExpConfigGroup.getSupershuttleExtension()));
+        log.info("Flughafen Connection Alignment Extension: " + (thesisExpConfigGroup.getFlughafenConnectionAlignment()));
+
+        log.info("------------");
 
 
 
 
         // ------ CONTROLER ------
 
-/*        Controler controler = StuttgartMasterThesisRunner.prepareControler( scenario ) ;
-        controler.run() ;*/
+        Controler controler = StuttgartMasterThesisRunner.prepareControler( scenario ) ;
+        controler.run() ;
 
         // -----------------------
 

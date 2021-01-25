@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -29,7 +30,7 @@ public class CreateConfigFromExcel {
     final Logger log = Logger.getLogger(CreateConfigFromExcel.class);
     private Sheet sheet = null;
 
-    public CreateConfigFromExcel(String configPath, String excelPath)  {
+    public CreateConfigFromExcel(String excelPath)  {
 
         try{
             FileInputStream excelFile = new FileInputStream(new File(excelPath));
@@ -50,7 +51,7 @@ public class CreateConfigFromExcel {
         CreateConfigFromExcel.Input input = new CreateConfigFromExcel.Input();
         JCommander.newBuilder().addObject(input).build().parse(args);
 
-        CreateConfigFromExcel creator = new CreateConfigFromExcel(input.configTemplate, input.excelFile);
+        CreateConfigFromExcel creator = new CreateConfigFromExcel(input.excelFile);
 
         Set<Integer> columnNumbers = CollectionUtils.stringToSet(input.columnNumbers).stream()
                 .map(Integer::parseInt)
@@ -151,12 +152,14 @@ public class CreateConfigFromExcel {
         log.info("Set fare zone shape file path to: " + fareZoneShapeFile);
         thesisExpConfigGroup.setFareZoneShapeFile(fareZoneShapeFile);
 
-        if (! sheet.getRow( fareZonesStartRow ).getCell(columnNumber).getStringCellValue().equals("-")){
+        DataFormatter dataFormatter = new DataFormatter();
+
+        if (! dataFormatter.formatCellValue(sheet.getRow( fareZonesStartRow ).getCell(columnNumber)).equals("-")){
             PtFaresConfigGroup configFares = ConfigUtils.addOrGetModule(config,
                     PtFaresConfigGroup.class);
 
             PtFaresConfigGroup.FaresGroup faresGroup = new PtFaresConfigGroup.FaresGroup();
-            faresGroup.setOutOfZonePrice(10.);
+            faresGroup.setOutOfZonePrice(8.);
 
             for (int i = 0; i < 8; i++){
                 double value = sheet.getRow( fareZonesStartRow + i ).getCell(columnNumber).getNumericCellValue();
