@@ -9,6 +9,7 @@ import org.matsim.core.controler.Controler;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.masterThesis.BanCarsFromSmallerStreets;
+import org.matsim.masterThesis.prep.CleanPopulationAfterCalibration;
 import org.matsim.masterThesis.ptModifiers.*;
 import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
 import org.matsim.stuttgart.run.StuttgartMasterThesisRunner;
@@ -47,6 +48,11 @@ public class RunMasterThesisScenarios {
         // ------ SCENARIO ------
         // Provide FareZoneShapeFile and ParkingZoneShapeFile to the scenario accordingly via the thesisExperimentalConfigGroup
         Scenario scenario = StuttgartMasterThesisRunner.prepareScenario(config);
+
+        // Clean-up plans as preparation for car link/ pt line removal
+        CleanPopulationAfterCalibration cleaner = new CleanPopulationAfterCalibration();
+        cleaner.clean(scenario);
+
 
         // If needed for scenario, ban cars from smaller streets
         if (thesisExpConfigGroup.getReducedCarInfrastructureShapeFile() != null){

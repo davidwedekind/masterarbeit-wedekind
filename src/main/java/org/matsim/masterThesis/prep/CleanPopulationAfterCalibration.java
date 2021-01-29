@@ -11,9 +11,11 @@ import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PopulationWriter;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.PopulationUtils;
+import org.matsim.core.population.algorithms.TripsToLegsAlgorithm;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.stuttgart.run.StuttgartAnalysisMainModeIdentifier;
 import playground.vsp.planselectors.InitialPlanKeeperPlanRemoval;
 
 /**
@@ -56,21 +58,8 @@ public class CleanPopulationAfterCalibration {
                     person.addPlan(selectedPlan);
                     person.setSelectedPlan(selectedPlan);
 
-                    selectedPlan.getPlanElements().stream()
-                            .filter(element -> element instanceof Leg)
-                            .map(element -> (Leg) element)
-                            .forEach(leg -> leg.setRoute(null));
-
-                    var firstActivity = (Activity) selectedPlan.getPlanElements().get(0);
-                    firstActivity.setLinkId(null);
-
-                    var trips = TripStructureUtils.getTrips(selectedPlan);
-
-                    for (var trip : trips) {
-                        var activity = trip.getDestinationActivity();
-                        activity.setLinkId(null);
-
-                    }
+                    TripsToLegsAlgorithm algorithm = new TripsToLegsAlgorithm(new StuttgartAnalysisMainModeIdentifier());
+                    algorithm.run(selectedPlan);
 
                 });
 
