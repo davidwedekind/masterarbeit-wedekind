@@ -4,6 +4,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PopulationWriter;
@@ -58,6 +60,18 @@ public class CleanPopulationAfterCalibration {
                             .filter(element -> element instanceof Leg)
                             .map(element -> (Leg) element)
                             .forEach(leg -> leg.setRoute(null));
+
+                    var firstActivity = (Activity) selectedPlan.getPlanElements().get(0);
+                    firstActivity.setLinkId(null);
+
+                    var trips = TripStructureUtils.getTrips(selectedPlan);
+
+                    for (var trip : trips) {
+                        var activity = trip.getDestinationActivity();
+                        activity.setLinkId(null);
+
+                    }
+
                 });
 
     }
