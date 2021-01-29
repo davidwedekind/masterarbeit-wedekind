@@ -30,12 +30,11 @@ public class CreateConfigFromExcel {
     final Logger log = Logger.getLogger(CreateConfigFromExcel.class);
     private Sheet sheet = null;
 
-    public CreateConfigFromExcel(String excelPath)  {
+    public CreateConfigFromExcel(String excelPath, String sheetName)  {
 
         try{
             FileInputStream excelFile = new FileInputStream(new File(excelPath));
             final Workbook workbook = new XSSFWorkbook(excelFile);
-            final String sheetName = "scenario_template";
             this.sheet = workbook.getSheet(sheetName);
 
         }catch(Exception e) {
@@ -51,7 +50,7 @@ public class CreateConfigFromExcel {
         CreateConfigFromExcel.Input input = new CreateConfigFromExcel.Input();
         JCommander.newBuilder().addObject(input).build().parse(args);
 
-        CreateConfigFromExcel creator = new CreateConfigFromExcel(input.excelFile);
+        CreateConfigFromExcel creator = new CreateConfigFromExcel(input.excelFile, input.sheetName);
 
         Set<Integer> columnNumbers = CollectionUtils.stringToSet(input.columnNumbers).stream()
                 .map(Integer::parseInt)
@@ -243,6 +242,9 @@ public class CreateConfigFromExcel {
     private static class Input {
         @Parameter(names = "-excelFile")
         private String excelFile;
+
+        @Parameter(names = "-sheetName")
+        private String sheetName;
 
         @Parameter(names = "-columnNumbers")
         private String columnNumbers;

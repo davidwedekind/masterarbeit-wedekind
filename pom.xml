@@ -67,7 +67,7 @@
         <dependency>
             <groupId>com.github.matsim-scenarios</groupId>
             <artifactId>matsim-stuttgart</artifactId>
-            <version>86b55f5cf7</version>
+            <version>dd7c0f7a0c</version>
         </dependency>
 
         <dependency>

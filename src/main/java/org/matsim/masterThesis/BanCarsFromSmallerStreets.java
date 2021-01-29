@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
  * @author dwedekind
  */
 
-// TODO: TEST IT !!!!!!
 
 public class BanCarsFromSmallerStreets {
     private static final Logger log = Logger.getLogger(BanCarsFromSmallerStreets.class);
@@ -51,7 +50,7 @@ public class BanCarsFromSmallerStreets {
     public void run(String shapeFilePath){
         final Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(shapeFilePath);
 
-        log.info("Start removing mode 'car and ride' from links that are located in banZones and undergo threshold value...");
+        log.info("Start removing mode 'car and ride' from links that are located in banZones and undergo both threshold pairs (if exist) ...");
 
         network.getLinks().values().parallelStream()
                 .filter(link -> !link.getId().toString().startsWith("tr"))
@@ -62,10 +61,10 @@ public class BanCarsFromSmallerStreets {
                             .findFirst();
 
                     if (feature.isPresent()) {
-                        var capacityThreshold_1 = feature.get().getAttribute("capacityThreshold_1");
-                        var freeSpeedThreshold_1 = feature.get().getAttribute("freeSpeedThreshold_1");
-                        var capacityThreshold_2 = feature.get().getAttribute("capacityThreshold_2");
-                        var freeSpeedThreshold_2 = feature.get().getAttribute("freeSpeedThreshold_2");
+                        var capacityThreshold_1 = feature.get().getAttribute("capTh1");
+                        var freeSpeedThreshold_1 = feature.get().getAttribute("frSpTh1");
+                        var capacityThreshold_2 = feature.get().getAttribute("capTh2");
+                        var freeSpeedThreshold_2 = feature.get().getAttribute("frSpTh2");
 
                         if (capacityThreshold_1 != null && capacityThreshold_2 == null) {
                             return !(link.getFreespeed() >= (double) freeSpeedThreshold_1) || !(link.getCapacity() >= (double) capacityThreshold_1);

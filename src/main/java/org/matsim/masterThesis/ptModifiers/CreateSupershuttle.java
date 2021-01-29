@@ -180,6 +180,9 @@ public class CreateSupershuttle {
             Departure departure_1 = tS.getFactory().createDeparture(Id.create("SS-Train-" + String.format("%03d", i) + "-1", Departure.class), dep);
             Departure departure_2 = tS.getFactory().createDeparture(Id.create("SS-Train-" + String.format("%03d", i) + "-2", Departure.class), dep);
 
+            departure_1.setVehicleId(veh_1.getId());
+            departure_2.setVehicleId(veh_2.getId());
+
             transitRoute_dir1.addDeparture(departure_1);
             transitRoute_dir2.addDeparture(departure_2);
 
