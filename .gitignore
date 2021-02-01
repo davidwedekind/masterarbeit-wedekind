@@ -25,3 +25,6 @@
 
 # compiled files
 /target
+test/input/ptModifier/optimizedNetwork.xml
+test/input/ptModifier/optimizedNetwork.xml.gz
+test/input/ptModifier/optimizedSchedule.xml
