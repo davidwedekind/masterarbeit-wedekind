@@ -46,7 +46,6 @@ public class RunMasterThesisScenarios {
 
 
         // ------ SCENARIO ------
-        // Provide FareZoneShapeFile and ParkingZoneShapeFile to the scenario accordingly via the thesisExperimentalConfigGroup
         Scenario scenario = StuttgartMasterThesisRunner.prepareScenario(config);
 
         // Clean-up plans as preparation for car link/ pt line removal
@@ -107,8 +106,8 @@ public class RunMasterThesisScenarios {
         // Bike and Ride
         log.info("BIKE AND RIDE");
         log.info("Bike Teleported Mode Speed [m/s]: " + config.plansCalcRoute().getModeRoutingParams().get(TransportMode.bike).getTeleportedModeSpeed().toString());
-        IntermodalTripFareCompensatorsConfigGroup compensatorsCfg = ConfigUtils.addOrGetModule(config,
-                IntermodalTripFareCompensatorsConfigGroup.class);
+        IntermodalTripFareCompensatorsConfigGroup compensatorsCfg = ConfigUtils.addOrGetModule(config, IntermodalTripFareCompensatorsConfigGroup.GROUP_NAME, IntermodalTripFareCompensatorsConfigGroup.class);
+
         OptionalDouble optionalTripCompensation = compensatorsCfg.getIntermodalTripFareCompensatorConfigGroups().stream()
                 .filter(var1 -> var1.getDrtModesAsString().equals(TransportMode.bike))
                 .mapToDouble(IntermodalTripFareCompensatorConfigGroup::getCompensationMoneyPerTrip)
@@ -124,9 +123,11 @@ public class RunMasterThesisScenarios {
         log.info("FARES");
         log.info("Fare Zone Shape File: " + thesisExpConfigGroup.getFareZoneShapeFile());
         log.info("Fare Zone prices ... ");
-        PtFaresConfigGroup configFares = ConfigUtils.addOrGetModule(config,
-                PtFaresConfigGroup.class);
-        Map<Integer, Double> allFares = configFares.getFaresGroup().getAllFares();
+
+
+        PtFaresConfigGroup configFares = ConfigUtils.addOrGetModule(config, PtFaresConfigGroup.GROUP, PtFaresConfigGroup.class);
+
+        Map<Integer, Double> allFares = configFares.getFaresGroup().getFaresAsMap();
         for (Map.Entry<Integer, Double> fare: allFares.entrySet()){
             log.info(String.format("Fare - %1$d zone(s): %2$f", fare.getKey(), fare.getValue()));
         }

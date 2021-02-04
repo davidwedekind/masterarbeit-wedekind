@@ -4,19 +4,15 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.population.Activity;
-import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Plan;
+import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.PopulationWriter;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.algorithms.TripsToLegsAlgorithm;
 import org.matsim.core.population.io.PopulationReader;
-import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.stuttgart.run.StuttgartAnalysisMainModeIdentifier;
-import playground.vsp.planselectors.InitialPlanKeeperPlanRemoval;
+import java.util.List;
 
 /**
  * @author dwedekind
@@ -58,10 +54,19 @@ public class CleanPopulationAfterCalibration {
                     person.addPlan(selectedPlan);
                     person.setSelectedPlan(selectedPlan);
 
-                    TripsToLegsAlgorithm algorithm = new TripsToLegsAlgorithm(new StuttgartAnalysisMainModeIdentifier());
+                    TripsToLegsAlgorithm algorithm = new TripsToLegsAlgorithm(new RoutingModeIdentifier());
                     algorithm.run(selectedPlan);
 
                 });
+
+    }
+
+
+    public static final class RoutingModeIdentifier implements AnalysisMainModeIdentifier {
+        @Override
+        public String identifyMainMode(List<? extends PlanElement> planElements) {
+            return (String) planElements.get(0).getAttributes().getAttribute("routingMode");
+        }
 
     }
 
