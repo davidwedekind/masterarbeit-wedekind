@@ -14,7 +14,6 @@ from analysis.utils import load_df_to_database, load_db_parameters, drop_table_i
 
 sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/calibration_views"))
 
-
 @click.group()
 def cli():
     pass
@@ -511,11 +510,7 @@ def create_h3_tables(ctx, shape, db_parameter):
             geom_cols={'center': 'POINT', 'geometry': 'POLYGON'})
 
 
-@cli.command()
-@click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
-@click.pass_context
-def create_mviews(ctx, db_parameter):
-    logging.info('sql directory: ' + sql_dir)
+def create_mviews_func(sql_dir, db_parameter):
     queries = os.listdir(sql_dir)
     queries.sort()
     db_parameter = load_db_parameters(db_parameter)
@@ -529,10 +524,40 @@ def create_mviews(ctx, db_parameter):
 
         logging.info("Create view: " + query_name)
         query = f'''
-            CREATE MATERIALIZED VIEW {query_name} AS(
-                {query}
-            );
-            '''
+                CREATE MATERIALIZED VIEW {query_name} AS(
+                    {query}
+                );
+                '''
+
+        logging.info(query)
+
+        with pg.connect(**db_parameter) as con:
+            cursor = con.cursor()
+            cursor.execute(query)
+            con.commit()
+
+
+@cli.command()
+@click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
+@click.pass_context
+def create_mviews(ctx, sql_dir, db_parameter):
+    logging.info('sql directory: ' + sql_dir)
+    create_mviews_func(sql_dir, db_parameter)
+
+
+def remove_mviews_func(sql_dir, db_parameter):
+    queries = os.listdir(sql_dir)
+    queries.sort(reverse=True)
+    db_parameter = load_db_parameters(db_parameter)
+
+    logging.info("Delete materialized views: " + str(len(queries)))
+
+    for query in queries:
+        query_name = query.split(sep="_", maxsplit=1)[1].replace(".sql", "")
+        logging.info("Drop view: " + query_name)
+        query = f'''
+                DROP MATERIALIZED VIEW IF EXISTS {query_name} ;
+                '''
 
         logging.info(query)
 
@@ -547,25 +572,7 @@ def create_mviews(ctx, db_parameter):
 @click.pass_context
 def remove_mviews(ctx, db_parameter):
     logging.info('sql directory: ' + sql_dir)
-    queries = os.listdir(sql_dir)
-    queries.sort(reverse=True)
-    db_parameter = load_db_parameters(db_parameter)
-
-    logging.info("Delete materialized views: " + str(len(queries)))
-
-    for query in queries:
-        query_name = query.split(sep="_", maxsplit=1)[1].replace(".sql", "")
-        logging.info("Drop view: " + query_name)
-        query = f'''
-            DROP MATERIALIZED VIEW IF EXISTS {query_name} ;
-            '''
-
-        logging.info(query)
-
-        with pg.connect(**db_parameter) as con:
-            cursor = con.cursor()
-            cursor.execute(query)
-            con.commit()
+    remove_mviews_func(sql_dir, db_parameter)
 
 
 def generate_hexagon_df(gdf_shape, res):

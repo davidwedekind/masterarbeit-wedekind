@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 from shapely.geometry.linestring import LineString
 import psycopg2 as pg
 
+sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/calibration_views"))
 
 @click.group()
 def cli():
@@ -59,7 +60,7 @@ def import_run_data(ctx, parent_dir, db_parameter, str_filter):
         import_run(parent_dir + "/output-" + run_dir, db_parameter)
 
     # -- VIEW UPDATES --
-    update_views(db_parameter)
+    update_views(db_parameter, sql_dir)
 
 
 def import_run(run_dir, db_parameter):
@@ -237,12 +238,10 @@ def parse_legs_file(legs):
     return gdf_legs
 
 
-def update_views(db_parameter):
+def update_views(db_parameter, sql_dir):
     """
     Function for executing sql scripts that create/ update trip output materialized views
     """
-
-    sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/calibration_views"))
 
     logging.info('sql directory: ' + sql_dir)
     queries = os.listdir(sql_dir)
