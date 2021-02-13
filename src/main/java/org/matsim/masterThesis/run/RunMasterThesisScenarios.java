@@ -6,11 +6,14 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.XY2LinksForFacilities;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.masterThesis.BanCarsFromSmallerStreets;
+import org.matsim.masterThesis.prep.CleanFacilitiesAfterCalibration;
 import org.matsim.masterThesis.prep.CleanPopulationAfterCalibration;
 import org.matsim.masterThesis.ptModifiers.*;
+import org.matsim.stuttgart.prepare.RemoveFacilitiesFromPlans;
 import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
 import org.matsim.stuttgart.run.StuttgartMasterThesisRunner;
 
@@ -35,9 +38,13 @@ public class RunMasterThesisScenarios {
 
         // ------ CONFIG ------
         // Read all scenario relevant parameters from config
-
         Config config = StuttgartMasterThesisRunner.prepareConfig(args, new StuttgartMasterThesisExperimentalConfigGroup());
         Path configPath = Paths.get(config.getContext().toURI()).getParent();
+
+        // After calibration, ride should be excluded from subtour mode choice
+        List<String> modes = new ArrayList<>(Arrays.asList(config.subtourModeChoice().getModes()));
+        modes.remove("ride");
+        config.subtourModeChoice().setModes(modes.toArray(new String[0]));
 
         // In addition to the calibration case, master thesis experimental config group is needed
         // for receiving some additional scenario parameters
@@ -48,10 +55,8 @@ public class RunMasterThesisScenarios {
         // ------ SCENARIO ------
         Scenario scenario = StuttgartMasterThesisRunner.prepareScenario(config);
 
-        // Clean-up plans as preparation for car link/ pt line removal
-        CleanPopulationAfterCalibration cleaner = new CleanPopulationAfterCalibration();
-        cleaner.clean(scenario);
-
+        // Clean-up plans
+        new CleanPopulationAfterCalibration().clean(scenario);
 
         // If needed for scenario, ban cars from smaller streets
         if (thesisExpConfigGroup.getReducedCarInfrastructureShapeFile() != null){
@@ -154,9 +159,6 @@ public class RunMasterThesisScenarios {
 
         Controler controler = StuttgartMasterThesisRunner.prepareControler(scenario) ;
         controler.run() ;
-
-
-
 
     }
 
