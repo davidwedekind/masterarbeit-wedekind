@@ -228,8 +228,8 @@ public class CreateConfigFromExcel {
 
         final String u6ExtensionShapeFile = sheet.getRow(ptExtensionStartRow).getCell(columnNumber).getStringCellValue();
         if (! u6ExtensionShapeFile.equals("-")) {
-            log.info("Set u6 extension shape file path to: " + parkingShapeFile);
-            thesisExpConfigGroup.setReducedCarInfrastructureShapeFile(u6ExtensionShapeFile);
+            log.info("Set u6 extension shape file path to: " + u6ExtensionShapeFile);
+            thesisExpConfigGroup.setU6ExtensionShapeFile(u6ExtensionShapeFile);
 
         } else {
             log.info("No u6 extension shape file specified!");
