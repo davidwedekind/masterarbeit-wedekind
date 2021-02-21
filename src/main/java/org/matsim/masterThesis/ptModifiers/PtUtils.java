@@ -164,9 +164,10 @@ public class PtUtils {
                         oldDeparture.getDepartureTime() + offSet
                 );
                 newDeparture.setVehicleId(oldDeparture.getVehicleId());
-
+                newDepartures.add(newDeparture);
             }
         }
+
         return newDepartures;
 
     }

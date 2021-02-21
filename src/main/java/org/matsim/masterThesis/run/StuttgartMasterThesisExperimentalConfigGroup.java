@@ -70,7 +70,7 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
 
     @StringGetter(S60_EXTENSION)
     public String getS60ExtensionAsString() {
-        return String.valueOf(getFlughafenConnectionAlignment());
+        return String.valueOf(getS60Extension());
     }
 
     public boolean getS60Extension() {

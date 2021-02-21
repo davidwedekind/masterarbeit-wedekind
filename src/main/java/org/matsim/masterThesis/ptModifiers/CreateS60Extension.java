@@ -2,6 +2,7 @@ package org.matsim.masterThesis.ptModifiers;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import graphql.AssertException;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -48,7 +49,7 @@ public class CreateS60Extension {
                 scenario.getTransitSchedule(), scenario.getNetwork());
         log.info("Transit validator results after modifying:");
         for (String errorMessage:resultAfterModifying.getErrors()){
-            log.error(errorMessage);
+            throw new AssertException(errorMessage);
         }
 
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(input.outputFile);

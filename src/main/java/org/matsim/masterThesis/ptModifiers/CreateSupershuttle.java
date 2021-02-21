@@ -135,7 +135,7 @@ public class CreateSupershuttle {
 
 
         // Create a transit line
-        TransitLine line = scenario.getTransitSchedule().getFactory().createTransitLine(Id.create("SS - 1", TransitLine.class));
+        TransitLine line = scenario.getTransitSchedule().getFactory().createTransitLine(Id.create("SL - 1", TransitLine.class));
         line.setName("SuperShuttle-Line-1");
 
         List<TransitRouteStop> transitStops_dir1 = Arrays.asList(
@@ -155,13 +155,13 @@ public class CreateSupershuttle {
                 .collect(Collectors.toList());
 
         TransitRoute transitRoute_dir1 = tS.getFactory().createTransitRoute(
-                Id.create("SuperShuttle-Line-1-Dir-1", TransitRoute.class),
+                Id.create(1, TransitRoute.class),
                 RouteUtils.createNetworkRoute(links_dir1),
                 transitStops_dir1,
                 "Hyperloop"
         );
         TransitRoute transitRoute_dir2 = tS.getFactory().createTransitRoute(
-                Id.create("SuperShuttle-Line-1-Dir-2", TransitRoute.class),
+                Id.create(2, TransitRoute.class),
                 RouteUtils.createNetworkRoute(links_dir2),
                 transitStops_dir2,
                 "Hyperloop"
@@ -171,14 +171,14 @@ public class CreateSupershuttle {
             double dep = i*300;
 
             // Create vehicles
-            Vehicle veh_1 = vF.createVehicle(Id.create("SS-Train-" + String.format("%03d", i) + "-1", Vehicle.class), type);
+            Vehicle veh_1 = vF.createVehicle(Id.create("SL-Train-" + String.format("%03d", i) + "-1", Vehicle.class), type);
             vehicles.addVehicle(veh_1);
-            Vehicle veh_2 = vF.createVehicle(Id.create("SS-Train-" + String.format("%03d", i) + "-2", Vehicle.class), type);
+            Vehicle veh_2 = vF.createVehicle(Id.create("SL-Train-" + String.format("%03d", i) + "-2", Vehicle.class), type);
             vehicles.addVehicle(veh_2);
 
             // Create departure
-            Departure departure_1 = tS.getFactory().createDeparture(Id.create("SS-Train-" + String.format("%03d", i) + "-1", Departure.class), dep);
-            Departure departure_2 = tS.getFactory().createDeparture(Id.create("SS-Train-" + String.format("%03d", i) + "-2", Departure.class), dep);
+            Departure departure_1 = tS.getFactory().createDeparture(Id.create("SL-Train-" + String.format("%03d", i) + "-1", Departure.class), dep);
+            Departure departure_2 = tS.getFactory().createDeparture(Id.create("SL-Train-" + String.format("%03d", i) + "-2", Departure.class), dep);
 
             departure_1.setVehicleId(veh_1.getId());
             departure_2.setVehicleId(veh_2.getId());

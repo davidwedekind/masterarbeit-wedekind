@@ -192,6 +192,8 @@ def import_legs(legs, db_parameter, run_name):
         'source_download_date': 'Nan',
     }
 
+    gdf_legs.to_csv("C:/Users/david/Desktop/m5_test.csv")
+
     load_df_to_database(
         df=gdf_legs,
         update_mode='append',
@@ -362,6 +364,8 @@ def get_pt_group(pt_line):
             return 'stb'
         elif pt_line.startswith('S '):
             return 'sbahn'
+        elif pt_line.startswith('SL '):
+            return 'hyperloop'
         else:
             return 'dbregio'
 

@@ -22,17 +22,17 @@ public class RunMasterThesisScenariosTest {
                     "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/output/output-m1_extreme",
                     "--config:controler.lastIteration",
                     "2"
-            });
+            });*/
 
-            RunMasterThesisScenarios.main(new String[]{
+/*            RunMasterThesisScenarios.main(new String[]{
                     "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/stuttgart-v1.0-0.001pct.config_m2_extreme.xml",
                     "--config:controler.outputDirectory",
                     "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/output/output-m2_extreme",
                     "--config:controler.lastIteration",
                     "2"
-            });
+            });*/
 
-            RunMasterThesisScenarios.main(new String[]{
+/*            RunMasterThesisScenarios.main(new String[]{
                     "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/stuttgart-v1.0-0.001pct.config_m3_extreme.xml",
                     "--config:controler.outputDirectory",
                     "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/output/output-m3_extreme",
@@ -40,21 +40,45 @@ public class RunMasterThesisScenariosTest {
                     "2"
             });*/
 
-            RunMasterThesisScenarios.main(new String[]{
+/*            RunMasterThesisScenarios.main(new String[]{
                     "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/stuttgart-v1.0-0.001pct.config_m4_extreme.xml",
                     "--config:controler.outputDirectory",
                     "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/output/output-m4_extreme",
                     "--config:controler.lastIteration",
                     "2"
-            });
+            });*/
 
 /*            RunMasterThesisScenarios.main(new String[]{
-                    "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/stuttgart-v1.0-0.001pct.config_m5_extreme.xml",
+                    "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/stuttgart-v1.0-0.001pct.config_m5_1.xml",
                     "--config:controler.outputDirectory",
-                    "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/output/output-m5_extreme",
+                    "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/output/output-m5_1",
                     "--config:controler.lastIteration",
                     "2"
             });*/
+
+/*            RunMasterThesisScenarios.main(new String[]{
+                    "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/stuttgart-v1.0-0.001pct.config_m5_2.xml",
+                    "--config:controler.outputDirectory",
+                    "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/output/output-m5_2",
+                    "--config:controler.lastIteration",
+                    "2"
+            });
+
+            RunMasterThesisScenarios.main(new String[]{
+                    "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/stuttgart-v1.0-0.001pct.config_m5_3.xml",
+                    "--config:controler.outputDirectory",
+                    "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/output/output-m5_3",
+                    "--config:controler.lastIteration",
+                    "2"
+            });*/
+
+            RunMasterThesisScenarios.main(new String[]{
+                    "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/stuttgart-v1.0-0.001pct.config_m5_1.xml",
+                    "--config:controler.outputDirectory",
+                    "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/output/output-m5_1",
+                    "--config:controler.lastIteration",
+                    "2"
+            });
 
 
         } catch (URISyntaxException e){

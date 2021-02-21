@@ -1,19 +1,19 @@
 package org.matsim.masterThesis.run;
 
+import graphql.AssertException;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
-import org.matsim.core.controler.XY2LinksForFacilities;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.masterThesis.BanCarsFromSmallerStreets;
-import org.matsim.masterThesis.prep.CleanFacilitiesAfterCalibration;
 import org.matsim.masterThesis.prep.CleanPopulationAfterCalibration;
 import org.matsim.masterThesis.ptModifiers.*;
-import org.matsim.stuttgart.prepare.RemoveFacilitiesFromPlans;
+import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
+import org.matsim.pt.utils.TransitScheduleValidator;
 import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
 import org.matsim.stuttgart.run.StuttgartMasterThesisRunner;
 
@@ -102,6 +102,16 @@ public class RunMasterThesisScenarios {
                 );
 
 
+        // Validate transit schedule
+        TransitScheduleValidator.ValidationResult resultAfterModifying = TransitScheduleValidator.validateAll(
+                scenario.getTransitSchedule(), scenario.getNetwork());
+        log.info("Transit validator results after modifying:");
+        for (String errorMessage:resultAfterModifying.getErrors()){
+            throw new AssertException(errorMessage);
+        }
+        log.info("No issues...");
+
+
         // ---- REPORT OF SCENARIO RELEVANT SETTINGS BEFORE RUN ----
         log.info("------------");
         log.info("---- SCENARIO RELEVANT CONFIG PARAMS AND SETTINGS ----");
@@ -152,8 +162,6 @@ public class RunMasterThesisScenarios {
         log.info("SuperShuttle Extension: " + (thesisExpConfigGroup.getSupershuttleExtension()));
         log.info("Flughafen Connection Alignment Extension: " + (thesisExpConfigGroup.getFlughafenConnectionAlignment()));
         log.info("------------");
-
-
 
         // ------ CONTROLER ------
 
