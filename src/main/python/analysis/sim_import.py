@@ -133,10 +133,19 @@ def parse_trips_file(trips):
     """
 
     # -- PARSING --
+    types = {'person': str,
+             'trip_number': int,
+             'trip_id': str,
+             'start_link': str,
+             'end_link': str,
+             'first_pt_boarding_stop': str,
+             'last_pt_egress_stop': str
+             }
+
     logging.info("Parse trips file...")
     try:
         with gzip.open(trips) as f:
-            df_trips = pd.read_csv(f, sep=";")
+            df_trips = pd.read_csv(f, sep=";", dtype=types)
     except OSError as e:
         raise Exception(e.strerror)
 
@@ -210,10 +219,18 @@ def parse_legs_file(legs):
     """
 
     # -- PARSING --
+    types = {'person': str,
+             'trip_id': str,
+             'start_link': str,
+             'end_link': str,
+             'access_stop_id': str,
+             'egress_stop_id': str
+             }
+
     logging.info("Parse legs file...")
     try:
         with gzip.open(legs) as f:
-            df_legs = pd.read_csv(f, sep=";")
+            df_legs = pd.read_csv(f, sep=";", dtype=types)
     except OSError as e:
         raise Exception(e.strerror)
 

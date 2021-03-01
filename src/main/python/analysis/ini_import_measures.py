@@ -3,7 +3,7 @@ import click
 import logging
 import analysis.ini_import
 
-sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/measure_views"))
+sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/measures_views"))
 
 @click.group()
 def cli():
@@ -54,11 +54,13 @@ def create_h3_tables(ctx, shape, db_parameter):
 
 
 @cli.command()
+@click.option('--sfactor', type=str, default='', help='Scaling factor in percent')
 @click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
 @click.pass_context
-def create_mviews(ctx, sql_dir, db_parameter):
+def create_mviews(ctx, sfactor, db_parameter):
+    logging.info('scaling factor: ' + sfactor)
     logging.info('sql directory: ' + sql_dir)
-    analysis.ini_import.create_mviews_func(sql_dir, db_parameter)
+    analysis.ini_import.create_mviews_func(sfactor, sql_dir, db_parameter)
 
 
 @cli.command()

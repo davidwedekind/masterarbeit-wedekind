@@ -29,4 +29,4 @@ SELECT
     (m.mode_share_m - bc.mode_share_bc) AS mode_share_diff
 FROM (trip_stats_bc bc
 JOIN trip_stats_measures m ON (bc.matsim_cal_main_mode = m.matsim_cal_main_mode))
-ORDER BY m.run_name, bc.matsim_cal_main_mode;
+ORDER BY m.run_name, bc.matsim_cal_main_mode
