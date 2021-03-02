@@ -5,14 +5,15 @@ import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.gbl.Gbl;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.masterThesis.BanCarsFromSmallerStreets;
 import org.matsim.masterThesis.prep.CleanPopulationAfterCalibration;
 import org.matsim.masterThesis.ptModifiers.*;
-import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.pt.utils.TransitScheduleValidator;
 import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
 import org.matsim.stuttgart.run.StuttgartMasterThesisRunner;
@@ -26,33 +27,57 @@ import java.util.*;
  * @author dwedekind
  */
 
-public class RunMasterThesisScenarios {
+public class ScenarioRunner {
 
     public static void main(String[] args) throws URISyntaxException {
-        final Logger log = Logger.getLogger(RunMasterThesisScenarios.class);
+        final Logger log = Logger.getLogger(ScenarioRunner.class);
 
         for (String arg : args) {
             log.info( arg );
         }
 
+        Config config = ScenarioRunner.prepareConfig( args );
+        Scenario scenario = ScenarioRunner.prepareScenario( config );
 
-        // ------ CONFIG ------
-        // Read all scenario relevant parameters from config
+        ScenarioRunner.validateModifications( scenario );
+
+        final Controler controler = ScenarioRunner.prepareControler( scenario );
+        controler.run() ;
+
+        ScenarioRunner.postprocessing( controler );
+    }
+
+
+    public static Config prepareConfig( String [] args, ConfigGroup... customModules ) {
+        final Logger log = Logger.getLogger(ScenarioRunner.class);
+        log.info("START CONFIG PREPARATION (SCENARIO RUNNER)");
+
+        // Read all scenario relevant parameters from config input
+        // Include own config group - StuttgartMasterThesisExperimentalConfigGroup
         Config config = StuttgartMasterThesisRunner.prepareConfig(args, new StuttgartMasterThesisExperimentalConfigGroup());
-        Path configPath = Paths.get(config.getContext().toURI()).getParent();
 
         // After calibration, ride should be excluded from subtour mode choice
         List<String> modes = new ArrayList<>(Arrays.asList(config.subtourModeChoice().getModes()));
         modes.remove("ride");
         config.subtourModeChoice().setModes(modes.toArray(new String[0]));
 
+        log.info("FINISH CONFIG PREPARATION (SCENARIO RUNNER)");
+        log.info("------------");
+        return config;
+    }
+
+
+    public static Scenario prepareScenario( Config config ) throws URISyntaxException {
+        final Logger log = Logger.getLogger(ScenarioRunner.class);
+        log.info("START SCENARIO PREPARATION (SCENARIO RUNNER)");
+
+        Path configPath = Paths.get(config.getContext().toURI()).getParent();
+
         // In addition to the calibration case, master thesis experimental config group is needed
         // for receiving some additional scenario parameters
         StuttgartMasterThesisExperimentalConfigGroup thesisExpConfigGroup =
                 ConfigUtils.addOrGetModule(config, StuttgartMasterThesisExperimentalConfigGroup.class);
 
-
-        // ------ SCENARIO ------
         Scenario scenario = StuttgartMasterThesisRunner.prepareScenario(config);
 
         // Clean-up plans
@@ -65,16 +90,13 @@ public class RunMasterThesisScenarios {
 
         }
 
-
         // If needed for scenario, perform the relevant pt modifications
         if (thesisExpConfigGroup.getSupershuttleExtension()){
             new CreateSupershuttle().runExtensionModifications(scenario);
-
         }
 
         if (thesisExpConfigGroup.getS60Extension()){
             new CreateS60Extension().runExtensionModifications(scenario);
-
         }
 
         if (thesisExpConfigGroup.getU6ExtensionShapeFile() != null){
@@ -85,12 +107,10 @@ public class RunMasterThesisScenarios {
 
             List<String> stopsToCancel = Arrays.asList("557985", "557983", "557997", "557980", "561004", "555473", "555472", "561003", "557977", "560458", "560457");
             modifier.shortenLine("Bus 120 - 11", stopsToCancel);
-
         }
 
         if (thesisExpConfigGroup.getFlughafenConnectionAlignment()){
             new OptimizeConnections().runOptimizer(scenario);
-
         }
 
         // Finally include fare Zones and parking shapes according to the scenario
@@ -99,8 +119,22 @@ public class RunMasterThesisScenarios {
                 scenario,
                 configPath.resolve(thesisExpConfigGroup.getFareZoneShapeFile()).toString(),
                 configPath.resolve(thesisExpConfigGroup.getParkingZoneShapeFile()).toString()
-                );
+        );
 
+        log.info("FINISH SCENARIO PREPARATION (SCENARIO RUNNER)");
+        log.info("------------");
+        return scenario;
+    }
+
+
+    public static void validateModifications( Scenario scenario ){
+        final Logger log = Logger.getLogger(ScenarioRunner.class);
+        log.info("START VALIDATION (SCENARIO RUNNER)");
+
+        final Config config = scenario.getConfig();
+
+        StuttgartMasterThesisExperimentalConfigGroup thesisExpConfigGroup =
+                ConfigUtils.addOrGetModule(config, StuttgartMasterThesisExperimentalConfigGroup.class);
 
         // Validate transit schedule
         TransitScheduleValidator.ValidationResult resultAfterModifying = TransitScheduleValidator.validateAll(
@@ -161,12 +195,19 @@ public class RunMasterThesisScenarios {
         log.info("U6 Extension: " + (thesisExpConfigGroup.getU6ExtensionShapeFile() == null ? "false" : thesisExpConfigGroup.getU6ExtensionShapeFile()));
         log.info("SuperShuttle Extension: " + (thesisExpConfigGroup.getSupershuttleExtension()));
         log.info("Flughafen Connection Alignment Extension: " + (thesisExpConfigGroup.getFlughafenConnectionAlignment()));
+
+        log.info("FINISH VALIDATION (SCENARIO RUNNER)");
         log.info("------------");
+    }
 
-        // ------ CONTROLER ------
 
-        Controler controler = StuttgartMasterThesisRunner.prepareControler(scenario) ;
-        controler.run() ;
+    public static Controler prepareControler( Scenario scenario ) {
+        Gbl.assertNotNull(scenario);
+        return StuttgartMasterThesisRunner.prepareControler(scenario);
+    }
+
+
+    public static void postprocessing( Controler controler ) {
 
     }
 
