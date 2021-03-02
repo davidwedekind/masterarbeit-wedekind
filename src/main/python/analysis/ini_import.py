@@ -463,12 +463,65 @@ def import_areas(ctx, sim_area, reg_stuttgart, vvs_area, db_parameter):
 
 
 @cli.command()
+@click.option('--network', type=str, default='', help='path to network file [.xml.gz]')
+@click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
+@click.pass_context
+def import_network(ctx, network, db_parameter):
+    """
+    NETWORK
+    This is the function which can be executed for uploading the network to the database
+
+    ---------
+    Execution:
+    python ini_import import-calib
+    --network [path of network.xml.gz]
+    --db_parameter [path of db parameter json]
+    ---------
+
+    """
+
+    # -- IMPORT --
+    logging.info("Read network file...")
+
+    network = matsim.read_network(network)
+    gdf_network = network.as_geo()
+    gdf_network = gdf_network.set_crs(epsg=25832)
+
+    # -- IMPORT --
+    table_name = 'network'
+    table_schema = 'matsim_input'
+    db_parameter = load_db_parameters(db_parameter)
+    drop_table_if_exists(db_parameter, table_name, table_schema)
+
+    DATA_METADATA = {
+        'title': 'Network',
+        'description': 'Network',
+        'source_name': 'Nan',
+        'source_url': 'Nan',
+        'source_year': 'Nan',
+        'source_download_date': 'Nan',
+    }
+
+    logging.info("Load data to database...")
+    load_df_to_database(
+        df=gdf_network,
+        update_mode='replace',
+        db_parameter=db_parameter,
+        schema=table_schema,
+        table_name=table_name,
+        meta_data=DATA_METADATA,
+        geom_cols={'geometry': 'LINESTRING'})
+
+    logging.info("Network import successful!")
+
+
+@cli.command()
 @click.option('--shape', type=str, default='', help='path to Germany shapefile [.shp]')
 @click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
 @click.pass_context
 def create_h3_tables(ctx, shape, db_parameter):
     """
-    H§ HEXAGONS (DIFFERENT LEVELS)
+    H3 HEXAGONS (DIFFERENT LEVELS)
     This is the function which can be executed for creating tables of h3 hexagons spread over Germany
 
     ---------
