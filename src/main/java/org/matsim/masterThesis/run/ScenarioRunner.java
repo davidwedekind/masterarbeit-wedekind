@@ -12,10 +12,12 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.gbl.Gbl;
+import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.masterThesis.BanCarsFromSmallerStreets;
 import org.matsim.masterThesis.analyzer.Link2PersonListAnalyzer;
+import org.matsim.masterThesis.analyzer.Network2Shape;
 import org.matsim.masterThesis.analyzer.PTRevenueAnalyzer;
 import org.matsim.masterThesis.analyzer.ParkingAnalyzer;
 import org.matsim.masterThesis.prep.CleanPopulationAfterCalibration;
@@ -239,6 +241,8 @@ public class ScenarioRunner {
         link2PersonListAnalyzer.printResults(outputFile);
         ptRevenueAnalyzer.printResults(outputFile);
         parkingAnalyzer.printResults(outputFile);
+
+        Network2Shape.exportNetwork2Shp(controler.getScenario(), outputDir, "epsg:25832", TransformationFactory.getCoordinateTransformation("epsg:25832", "epsg:25832"));
 
         log.info("FINISH POST-PROCESSING");
         log.info("------------");
