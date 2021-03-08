@@ -379,10 +379,10 @@ def get_pt_group(pt_line):
             return 'bus'
         elif pt_line.startswith('STB'):
             return 'stb'
-        elif pt_line.startswith('S '):
-            return 'sbahn'
         elif pt_line.startswith('SL '):
             return 'hyperloop'
+        elif pt_line.startswith('S '):
+            return 'sbahn'
         else:
             return 'dbregio'
 
