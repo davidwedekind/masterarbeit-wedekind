@@ -4,14 +4,20 @@ import graphql.AssertException;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.events.EventsUtils;
+import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.gbl.Gbl;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.masterThesis.BanCarsFromSmallerStreets;
+import org.matsim.masterThesis.analyzer.Link2PersonListAnalyzer;
+import org.matsim.masterThesis.analyzer.PTRevenueAnalyzer;
+import org.matsim.masterThesis.analyzer.ParkingAnalyzer;
 import org.matsim.masterThesis.prep.CleanPopulationAfterCalibration;
 import org.matsim.masterThesis.ptModifiers.*;
 import org.matsim.pt.utils.TransitScheduleValidator;
@@ -208,7 +214,34 @@ public class ScenarioRunner {
 
 
     public static void postprocessing( Controler controler ) {
+        final Logger log = Logger.getLogger(ScenarioRunner.class);
+        log.info("START POST-PROCESSING");
 
+        Link2PersonListAnalyzer link2PersonListAnalyzer = new Link2PersonListAnalyzer(controler.getScenario());
+        PTRevenueAnalyzer ptRevenueAnalyzer = new PTRevenueAnalyzer(controler.getScenario());
+        ParkingAnalyzer parkingAnalyzer = new ParkingAnalyzer(controler.getScenario());
+
+        EventsManager events = EventsUtils.createEventsManager();
+        events.addHandler(link2PersonListAnalyzer);
+        events.addHandler(ptRevenueAnalyzer);
+        events.addHandler(parkingAnalyzer);
+
+        String outputDir = controler.getConfig().controler().getOutputDirectory();
+        String runId = controler.getConfig().controler().getRunId();
+        String eventsFile = outputDir + "/" + runId + ".output_events.xml.gz";
+
+        MatsimEventsReader reader = new MatsimEventsReader(events);
+        events.initProcessing();
+        reader.readFile(eventsFile);
+        events.finishProcessing();
+
+        String outputFile = outputDir + "/" + runId + ".output_";
+        link2PersonListAnalyzer.printResults(outputFile);
+        ptRevenueAnalyzer.printResults(outputFile);
+        parkingAnalyzer.printResults(outputFile);
+
+        log.info("FINISH POST-PROCESSING");
+        log.info("------------");
     }
 
 }
