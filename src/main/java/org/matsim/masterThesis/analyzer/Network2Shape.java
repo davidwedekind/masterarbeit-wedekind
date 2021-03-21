@@ -61,6 +61,7 @@ public class Network2Shape {
         String outputDirectory = Paths.get(input.network).getParent().toString();
 
         Config config = ConfigUtils.createConfig();
+        config.controler().setRunId(input.runId);
         config.global().setCoordinateSystem("epsg:25832");
         config.network().setInputFile(input.network);
         Scenario scenario = ScenarioUtils.loadScenario(config);
@@ -143,9 +144,9 @@ public class Network2Shape {
 
         log.info("Writing network to shapefile... ");
         if (scenario.getConfig().controler().getRunId() == null) {
-            ShapeFileWriter.writeGeometries(features, outputPath + "network.shp");
+            ShapeFileWriter.writeGeometries(features, outputPath + "output_network.shp");
         } else {
-            ShapeFileWriter.writeGeometries(features, outputPath + scenario.getConfig().controler().getRunId() + ".network.shp");
+            ShapeFileWriter.writeGeometries(features, outputPath + scenario.getConfig().controler().getRunId() + ".output_network.shp");
         }
         log.info("Writing network to shapefile... Done.");
     }
@@ -155,6 +156,9 @@ public class Network2Shape {
 
         @Parameter(names = "-network")
         private String network;
+
+        @Parameter(names = "-runId")
+        private String runId;
 
     }
 

@@ -46,14 +46,6 @@ def import_areas(ctx, sim_area, reg_stuttgart, vvs_area, db_parameter):
 
 
 @cli.command()
-@click.option('--network', type=str, default='', help='path to network file [.xml.gz]')
-@click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
-@click.pass_context
-def import_network(ctx, network, db_parameter):
-    analysis.ini_import.import_network(None, network, db_parameter)
-
-
-@cli.command()
 @click.option('--shape', type=str, default='', help='path to Germany shapefile [.shp]')
 @click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
 @click.pass_context
