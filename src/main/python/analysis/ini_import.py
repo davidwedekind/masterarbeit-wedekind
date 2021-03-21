@@ -14,7 +14,6 @@ from analysis.utils import load_df_to_database, load_db_parameters, drop_table_i
 
 sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/calibration_views"))
 
-
 @click.group()
 def cli():
     pass
@@ -278,6 +277,7 @@ def import_calib(ctx, calib, db_parameter):
     tables['mid_other_param'] = pd.read_excel(calib, sheet_name='02_Wege_Tidy')
     tables['mid_trip_stats_multiple_level'] = pd.read_excel(calib, sheet_name='03_ModalSplit_Tidy')
     tables['mid_user_segments'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente_Tidy')
+    tables['vvs_pt_segments'] = pd.read_excel(calib, sheet_name='05_OEVSegmente', skipfooter=10)
 
     for df in tables.values():
         df.columns = df.columns.map(str.lower)
@@ -318,6 +318,13 @@ def import_calib(ctx, calib, db_parameter):
         'source_url': 'http://gecms.region-stuttgart.org/Download.aspx?id=104816',
         'source_year': '2019',
         'source_download_date': '2020-11-20'
+    }, 'vvs_pt_segments': {
+        'title': 'OEV Segmente',
+        'description': 'VVS OEV Segmente',
+        'source_name': 'VVS 2019, Zahlen, Daten, Fakten. Verbundbericht 2019',
+        'source_url': 'https://www.vvs.de/download/Zahlen-Daten-Fakten-2019.pdf',
+        'source_year': '2019',
+        'source_download_date': '2021-02-28'
     }}
 
     # -- IMPORT --
@@ -461,7 +468,7 @@ def import_areas(ctx, sim_area, reg_stuttgart, vvs_area, db_parameter):
 @click.pass_context
 def create_h3_tables(ctx, shape, db_parameter):
     """
-    H§ HEXAGONS (DIFFERENT LEVELS)
+    H3 HEXAGONS (DIFFERENT LEVELS)
     This is the function which can be executed for creating tables of h3 hexagons spread over Germany
 
     ---------
@@ -511,14 +518,20 @@ def create_h3_tables(ctx, shape, db_parameter):
             geom_cols={'center': 'POINT', 'geometry': 'POLYGON'})
 
 
-@cli.command()
-@click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
-@click.pass_context
-def create_mviews(ctx, db_parameter):
-    logging.info('sql directory: ' + sql_dir)
+def insert_placeholders_in_sql(sql, dct):
+    repl = dict()
+    for key in dct:
+        if key in sql:
+            repl[key] = dct[key]
+
+    return sql.format(**repl)
+
+
+def create_mviews_func(sfactor, sql_dir, db_parameter):
     queries = os.listdir(sql_dir)
     queries.sort()
     db_parameter = load_db_parameters(db_parameter)
+    dct = {'**sfactor**': float(100)/float(sfactor)}
 
     logging.info("Create materialized views: " + str(len(queries)))
 
@@ -526,13 +539,46 @@ def create_mviews(ctx, db_parameter):
         query_name = query.split(sep="_", maxsplit=1)[1].replace(".sql", "")
         query = open(sql_dir + "/" + query)
         query = query.read()
+        query = insert_placeholders_in_sql(query, dct)
 
         logging.info("Create view: " + query_name)
         query = f'''
-            CREATE MATERIALIZED VIEW {query_name} AS(
-                {query}
-            );
-            '''
+                CREATE MATERIALIZED VIEW {query_name} AS(
+                    {query}
+                );
+                '''
+
+        logging.info(query)
+
+        with pg.connect(**db_parameter) as con:
+            cursor = con.cursor()
+            cursor.execute(query)
+            con.commit()
+
+
+@cli.command()
+@click.option('--sfactor', type=str, default='', help='Scaling factor in percent')
+@click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
+@click.pass_context
+def create_mviews(ctx, sfactor, db_parameter):
+    logging.info('scaling factor: ' + sfactor)
+    logging.info('sql directory: ' + sql_dir)
+    create_mviews_func(sfactor, sql_dir, db_parameter)
+
+
+def remove_mviews_func(sql_dir, db_parameter):
+    queries = os.listdir(sql_dir)
+    queries.sort(reverse=True)
+    db_parameter = load_db_parameters(db_parameter)
+
+    logging.info("Delete materialized views: " + str(len(queries)))
+
+    for query in queries:
+        query_name = query.split(sep="_", maxsplit=1)[1].replace(".sql", "")
+        logging.info("Drop view: " + query_name)
+        query = f'''
+                DROP MATERIALIZED VIEW IF EXISTS {query_name} ;
+                '''
 
         logging.info(query)
 
@@ -547,25 +593,7 @@ def create_mviews(ctx, db_parameter):
 @click.pass_context
 def remove_mviews(ctx, db_parameter):
     logging.info('sql directory: ' + sql_dir)
-    queries = os.listdir(sql_dir)
-    queries.sort(reverse=True)
-    db_parameter = load_db_parameters(db_parameter)
-
-    logging.info("Delete materialized views: " + str(len(queries)))
-
-    for query in queries:
-        query_name = query.split(sep="_", maxsplit=1)[1].replace(".sql", "")
-        logging.info("Drop view: " + query_name)
-        query = f'''
-            DROP MATERIALIZED VIEW IF EXISTS {query_name} ;
-            '''
-
-        logging.info(query)
-
-        with pg.connect(**db_parameter) as con:
-            cursor = con.cursor()
-            cursor.execute(query)
-            con.commit()
+    remove_mviews_func(sql_dir, db_parameter)
 
 
 def generate_hexagon_df(gdf_shape, res):

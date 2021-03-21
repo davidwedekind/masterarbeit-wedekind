@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.matsim</groupId>
-    <artifactId>matsim-stuttgart</artifactId>
+    <artifactId>masterarbeit-wedekind</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
@@ -64,19 +64,17 @@
             <version>12.11</version>
         </dependency>
 
-<!--
         <dependency>
             <groupId>com.github.matsim-scenarios</groupId>
-            <artifactId>matsim-los-angeles</artifactId>
-            <version>v1.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>matsim-stuttgart</artifactId>
+            <version>a229d30599</version>
         </dependency>
--->
+
+        <dependency>
+            <groupId>com.github.matsim-vsp</groupId>
+            <artifactId>pt-extensions</artifactId>
+            <version>fac7381209</version>
+        </dependency>
 
         <dependency>
             <groupId>com.github.matsim-org</groupId>

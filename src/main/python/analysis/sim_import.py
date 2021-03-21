@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 from shapely.geometry.linestring import LineString
 import psycopg2 as pg
 
+sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/calibration_views"))
 
 @click.group()
 def cli():
@@ -59,7 +60,7 @@ def import_run_data(ctx, parent_dir, db_parameter, str_filter):
         import_run(parent_dir + "/output-" + run_dir, db_parameter)
 
     # -- VIEW UPDATES --
-    update_views(db_parameter)
+    update_views(db_parameter, sql_dir)
 
 
 def import_run(run_dir, db_parameter):
@@ -132,10 +133,19 @@ def parse_trips_file(trips):
     """
 
     # -- PARSING --
+    types = {'person': str,
+             'trip_number': int,
+             'trip_id': str,
+             'start_link': str,
+             'end_link': str,
+             'first_pt_boarding_stop': str,
+             'last_pt_egress_stop': str
+             }
+
     logging.info("Parse trips file...")
     try:
         with gzip.open(trips) as f:
-            df_trips = pd.read_csv(f, sep=";")
+            df_trips = pd.read_csv(f, sep=";", dtype=types)
     except OSError as e:
         raise Exception(e.strerror)
 
@@ -191,6 +201,8 @@ def import_legs(legs, db_parameter, run_name):
         'source_download_date': 'Nan',
     }
 
+    gdf_legs.to_csv("C:/Users/david/Desktop/m5_test.csv")
+
     load_df_to_database(
         df=gdf_legs,
         update_mode='append',
@@ -207,10 +219,18 @@ def parse_legs_file(legs):
     """
 
     # -- PARSING --
+    types = {'person': str,
+             'trip_id': str,
+             'start_link': str,
+             'end_link': str,
+             'access_stop_id': str,
+             'egress_stop_id': str
+             }
+
     logging.info("Parse legs file...")
     try:
         with gzip.open(legs) as f:
-            df_legs = pd.read_csv(f, sep=";")
+            df_legs = pd.read_csv(f, sep=";", dtype=types)
     except OSError as e:
         raise Exception(e.strerror)
 
@@ -237,12 +257,10 @@ def parse_legs_file(legs):
     return gdf_legs
 
 
-def update_views(db_parameter):
+def update_views(db_parameter, sql_dir):
     """
     Function for executing sql scripts that create/ update trip output materialized views
     """
-
-    sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/calibration_views"))
 
     logging.info('sql directory: ' + sql_dir)
     queries = os.listdir(sql_dir)
@@ -361,6 +379,8 @@ def get_pt_group(pt_line):
             return 'bus'
         elif pt_line.startswith('STB'):
             return 'stb'
+        elif pt_line.startswith('SL '):
+            return 'hyperloop'
         elif pt_line.startswith('S '):
             return 'sbahn'
         else:

@@ -1,0 +1,27 @@
+SELECT legs.index,
+    legs.person,
+    legs.trip_id,
+    legs.dep_time,
+    legs.trav_time,
+    legs.wait_time,
+    legs.distance,
+    legs.mode,
+    legs.start_link,
+    legs.start_x,
+    legs.start_y,
+    legs.end_link,
+    legs.end_x,
+    legs.end_y,
+    legs.access_stop_id,
+    legs.egress_stop_id,
+    legs.transit_line,
+    legs.transit_route,
+    legs.geometry,
+    legs.arr_time,
+    legs.leg_speed,
+    legs.pt_line,
+    legs.pt_group,
+    legs.run_name
+FROM (matsim_output.sim_legs_raw legs
+LEFT JOIN raw.areas ar ON (st_within(legs.geometry, ar.geometry)))
+WHERE ((ar.subpop = 'stuttgart_umland'::text) AND (legs.mode = 'car'::text))
