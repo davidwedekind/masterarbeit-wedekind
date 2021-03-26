@@ -13,7 +13,7 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
     private static final String U6_EXTENSION_SHAPEFILE = "u6ExtensionShapeFile";
     private static final String S60_EXTENSION = "s60Extension";
     private static final String SUPERSHUTTLE_EXTENSION = "supershuttleExtension";
-    private static final String FLUGHAFEN_CONNECTION_ALIGNMENT = "flughafenConnectionAlignment";
+    private static final String TAKT_ALIGNMENT = "flughafenConnectionAlignment";
 
     private String parkingZoneShapeFile = "parkingZones_bc.shp";
     private String fareZoneShapeFile = "fareZones_bc.shp";
@@ -21,7 +21,7 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
     private String u6ExtensionShapeFile = null;
     private boolean s60Extension = false;
     private boolean supershuttleExtension = false;
-    private boolean flughafenConnectionAlignment = false;
+    private boolean taktAlignment = false;
 
 
     public StuttgartMasterThesisExperimentalConfigGroup(){
@@ -104,22 +104,22 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
         this.supershuttleExtension = supershuttleExtension;
     }
 
-    @StringGetter(FLUGHAFEN_CONNECTION_ALIGNMENT)
-    public String getFlughafenConnectionAlignmentAsString() {
-        return String.valueOf(getFlughafenConnectionAlignment());
+    @StringGetter(TAKT_ALIGNMENT)
+    public String getTaktAlignmentAsString() {
+        return String.valueOf(getTaktAlignment());
     }
 
-    public boolean getFlughafenConnectionAlignment() {
-        return flughafenConnectionAlignment;
+    public boolean getTaktAlignment() {
+        return taktAlignment;
     }
 
-    @StringSetter(FLUGHAFEN_CONNECTION_ALIGNMENT)
-    public void setFlughafenConnectionAlignment(String flughafenConnectionAlignment) {
-        setFlughafenConnectionAlignment(Boolean.parseBoolean(flughafenConnectionAlignment));
+    @StringSetter(TAKT_ALIGNMENT)
+    public void setTaktAlignment(String taktAlignment) {
+        setTaktAlignment(Boolean.parseBoolean(taktAlignment));
     }
 
-    public void setFlughafenConnectionAlignment(boolean flughafenConnectionAlignment) {
-        this.flughafenConnectionAlignment = flughafenConnectionAlignment;
+    public void setTaktAlignment(boolean taktAlignment) {
+        this.taktAlignment = taktAlignment;
     }
 
 }

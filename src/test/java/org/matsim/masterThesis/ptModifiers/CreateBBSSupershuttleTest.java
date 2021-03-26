@@ -10,8 +10,8 @@ import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.pt.utils.TransitScheduleValidator;
 
 
-public class CreateSupershuttleTest {
-    private static final Logger log = Logger.getLogger(CreateSupershuttleTest.class);
+public class CreateBBSSupershuttleTest {
+    private static final Logger log = Logger.getLogger(CreateBBSSupershuttleTest.class);
 
     @Test
     public void testRunExtensionModifications() throws Exception {
@@ -29,7 +29,7 @@ public class CreateSupershuttleTest {
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
-        new CreateSupershuttle().runExtensionModifications(scenario);
+        new CreateBBSSupershuttle().runExtensionModifications(scenario);
 
         TransitScheduleValidator.ValidationResult resultAfterModifying = TransitScheduleValidator.validateAll(
                 scenario.getTransitSchedule(), scenario.getNetwork());

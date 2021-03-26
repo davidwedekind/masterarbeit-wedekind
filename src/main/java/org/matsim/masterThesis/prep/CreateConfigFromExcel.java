@@ -46,9 +46,13 @@ public class CreateConfigFromExcel {
 
 
     public static void main(String[] args) {
+        final Logger log = Logger.getLogger(CreateConfigFromExcel.class);
 
         CreateConfigFromExcel.Input input = new CreateConfigFromExcel.Input();
         JCommander.newBuilder().addObject(input).build().parse(args);
+
+        log.info("Get creation settings from: " + input.excelFile);
+        log.info("Look at worksheet: " + input.sheetName);
 
         CreateConfigFromExcel creator = new CreateConfigFromExcel(input.excelFile, input.sheetName);
 
@@ -59,37 +63,60 @@ public class CreateConfigFromExcel {
 
         // for each column defined write config and bash
         for (Integer columnNumber: columnNumbers){
-            Config config = ConfigUtils.loadConfig(input.configTemplate);
+            String configFileInput = creator.getConfigFileInput(columnNumber);
+            log.info("Work on setting of column number: " + String.valueOf(columnNumber + 1));
+            log.info("Config input file: " + configFileInput);
+
+            Config config = ConfigUtils.loadConfig(configFileInput);
 
             creator.modifyConfigByValuesFromExcelColumn(config, columnNumber);
             String sampleSize = creator.getSampleSize(columnNumber);
             String runId = config.controler().getRunId();
+            log.info("Run Id: " + configFileInput);
 
             String configOutputPathString = input.outputDir + "/stuttgart-v1.0-" + sampleSize + ".config_" + runId + ".xml";
             new ConfigWriter(config).write(configOutputPathString);
 
-            File bashScript = new File(input.bashTemplate);
-            try {
-                String bashContents = FileUtils.readFileToString(bashScript);
-                bashContents = bashContents.replace("XXX", runId);
-                String bashOutputPathString = input.outputDir + "/stuttgart-v1.0-" + sampleSize + "_" + runId + ".sh";
-                File bashOutputFile = new File(bashOutputPathString);
-                FileUtils.writeStringToFile(bashOutputFile, bashContents);
+            String bashFileInput = creator.getBashFileInput(columnNumber);
+            log.info("Bash input file: " + bashFileInput);
 
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (! bashFileInput.equals("-")){
+                File bashScript = new File(bashFileInput);
+                try {
+                    String bashContents = FileUtils.readFileToString(bashScript);
+                    bashContents = bashContents.replace("XXX", runId);
+                    String bashOutputPathString = input.outputDir + "/stuttgart-v1.0-" + sampleSize + "_" + runId + ".sh";
+                    File bashOutputFile = new File(bashOutputPathString);
+                    FileUtils.writeStringToFile(bashOutputFile, bashContents);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
             }
+
+            log.info("Done.....");
+
 
         }
 
 
     }
 
-
     private String getSampleSize(int columnNumber){
-        final int sampleSizeRow = 6;
+        final int sampleSizeRow = 8;
         return sheet.getRow(sampleSizeRow - 1).getCell(columnNumber).getStringCellValue();
 
+    }
+
+    private String getConfigFileInput(int columnNumber){
+        final int configFileRow = 6;
+        return sheet.getRow(configFileRow - 1).getCell(columnNumber).getStringCellValue();
+    }
+
+    private String getBashFileInput(int columnNumber){
+        final int bashFileRow = 7;
+        return sheet.getRow(bashFileRow - 1).getCell(columnNumber).getStringCellValue();
     }
 
 
@@ -115,14 +142,14 @@ public class CreateConfigFromExcel {
         config.plans().setInputFile(plansFile);
 
         // BIKE TELEPORTED MODE SPEED
-        final int bikeModeSpeedRow = 9;
+        final int bikeModeSpeedRow = 11;
         final double bikeModeSpeed = sheet.getRow(bikeModeSpeedRow - 1).getCell(columnNumber).getNumericCellValue();
         log.info("Set bike teleported mode speed to: " + plansFile);
         ModeRoutingParams bikeParams = config.plansCalcRoute().getModeRoutingParams().get(TransportMode.bike);
         bikeParams.setTeleportedModeSpeed(bikeModeSpeed);
 
         // COMPENSATION PER INTERMODAL TRIP
-        final int compPerIntermodalTripRow = 10;
+        final int compPerIntermodalTripRow = 12;
         final double compPerIntermodalTrip = sheet.getRow(compPerIntermodalTripRow - 1).getCell(columnNumber).getNumericCellValue();
         log.info("Set compensation per intermodal trip to: " + compPerIntermodalTrip);
 
@@ -137,14 +164,14 @@ public class CreateConfigFromExcel {
         compensatorsCfg.addParameterSet(compensatorCfg);
 
         // CHAIN BASED MODES
-        final int chainBasedModesRow = 11;
+        final int chainBasedModesRow = 13;
         final String chainBasedModes = sheet.getRow(chainBasedModesRow - 1).getCell(columnNumber).getStringCellValue();
         log.info("Set compensation chain bases modes to: " + chainBasedModes);
         String[] modes = chainBasedModes.split(", ");
         config.subtourModeChoice().setChainBasedModes(modes);
 
         // FARES
-        final int fareZonesStartRow = 14;
+        final int fareZonesStartRow = 16;
         StuttgartMasterThesisExperimentalConfigGroup thesisExpConfigGroup = ConfigUtils.addOrGetModule(config,
                 StuttgartMasterThesisExperimentalConfigGroup.class);
         final String fareZoneShapeFile = sheet.getRow(fareZonesStartRow - 1).getCell(columnNumber).getStringCellValue();
@@ -194,13 +221,13 @@ public class CreateConfigFromExcel {
         }
 
         // PARKING
-        final int parkingShapeFileRow = 25;
+        final int parkingShapeFileRow = 27;
         final String parkingShapeFile = sheet.getRow(parkingShapeFileRow - 1).getCell(columnNumber).getStringCellValue();
         log.info("Set parking shape file path to: " + parkingShapeFile);
         thesisExpConfigGroup.setParkingZoneShapeFile(parkingShapeFile);
 
         // REDUCED STREET NETWORK
-        final int reducedStreetNetworkShpFileRow = 28;
+        final int reducedStreetNetworkShpFileRow = 30;
         final String reducedStreetNetworkShpFile = sheet.getRow(reducedStreetNetworkShpFileRow - 1).getCell(columnNumber).getStringCellValue();
 
         if (! reducedStreetNetworkShpFile.equals("-")) {
@@ -213,28 +240,19 @@ public class CreateConfigFromExcel {
         }
 
         // PT EXTENSION
-        final int ptExtensionStartRow = 31;
+        final int ptExtensionStartRow = 33;
         final boolean s60Extension = sheet.getRow(ptExtensionStartRow - 1).getCell(columnNumber).getBooleanCellValue();
         log.info("Tag s60 extension: " + s60Extension);
         thesisExpConfigGroup.setS60Extension(s60Extension);
 
-        final boolean supershuttleExtension = sheet.getRow(ptExtensionStartRow + 1).getCell(columnNumber).getBooleanCellValue();
+        final boolean supershuttleExtension = sheet.getRow(ptExtensionStartRow).getCell(columnNumber).getBooleanCellValue();
         log.info("Tag super shuttle extension: " + supershuttleExtension);
         thesisExpConfigGroup.setSupershuttleExtension(supershuttleExtension);
 
-        final boolean flughafenConnectionAlignment = sheet.getRow(ptExtensionStartRow + 2).getCell(columnNumber).getBooleanCellValue();
-        log.info("Tag flughafen connection alignment extension: " + flughafenConnectionAlignment);
-        thesisExpConfigGroup.setFlughafenConnectionAlignment(flughafenConnectionAlignment);
+        final boolean taktAlignment = sheet.getRow(ptExtensionStartRow + 1).getCell(columnNumber).getBooleanCellValue();
+        log.info("Tag takt alignment extension: " + taktAlignment);
+        thesisExpConfigGroup.setTaktAlignment(taktAlignment);
 
-        final String u6ExtensionShapeFile = sheet.getRow(ptExtensionStartRow).getCell(columnNumber).getStringCellValue();
-        if (! u6ExtensionShapeFile.equals("-")) {
-            log.info("Set u6 extension shape file path to: " + u6ExtensionShapeFile);
-            thesisExpConfigGroup.setU6ExtensionShapeFile(u6ExtensionShapeFile);
-
-        } else {
-            log.info("No u6 extension shape file specified!");
-
-        }
 
     }
 
@@ -248,12 +266,6 @@ public class CreateConfigFromExcel {
 
         @Parameter(names = "-columnNumbers")
         private String columnNumbers;
-
-        @Parameter(names = "-configTemplate")
-        private String configTemplate;
-
-        @Parameter(names = "-bashTemplate")
-        private String bashTemplate;
 
         @Parameter(names = "-outputDir")
         private String outputDir;

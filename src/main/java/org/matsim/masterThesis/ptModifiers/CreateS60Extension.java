@@ -9,6 +9,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -31,7 +32,7 @@ public class CreateS60Extension {
         log.info("Input network file: " + input.networkFile);
         log.info("Input transit schedule file: " + input.transitSchedule);
         log.info("Input transit vehicle file: " + input.transitSchedule);
-        log.info("Output network file: " + input.outputFile);
+        log.info("Output file directory: " + input.outputFile);
 
         Config config = ConfigUtils.createConfig();
 
@@ -43,7 +44,7 @@ public class CreateS60Extension {
         config.network().setInputFile(input.networkFile);
         config.vehicles().setVehiclesFile(input.transitVehicles);
 
-
+        new CreateS60Extension().runExtensionModifications(scenario);
 
         TransitScheduleValidator.ValidationResult resultAfterModifying = TransitScheduleValidator.validateAll(
                 scenario.getTransitSchedule(), scenario.getNetwork());
@@ -52,8 +53,8 @@ public class CreateS60Extension {
             throw new AssertException(errorMessage);
         }
 
-        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(input.outputFile);
-
+        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(input.outputFile + "/modifiedSchedule.xml.gz");
+        new NetworkWriter(scenario.getNetwork()).write(input.outputFile + "/modifiedNetwork.xml.gz");
     }
 
 

@@ -2,6 +2,7 @@ package org.matsim.masterThesis.run;
 
 import graphql.AssertException;
 import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -22,6 +23,8 @@ import org.matsim.masterThesis.analyzer.PTRevenueAnalyzer;
 import org.matsim.masterThesis.analyzer.ParkingAnalyzer;
 import org.matsim.masterThesis.prep.CleanPopulationAfterCalibration;
 import org.matsim.masterThesis.ptModifiers.*;
+import org.matsim.pt.transitSchedule.api.TransitLine;
+import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.utils.TransitScheduleValidator;
 import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
 import org.matsim.stuttgart.run.StuttgartMasterThesisRunner;
@@ -100,7 +103,7 @@ public class ScenarioRunner {
 
         // If needed for scenario, perform the relevant pt modifications
         if (thesisExpConfigGroup.getSupershuttleExtension()){
-            new CreateSupershuttle().runExtensionModifications(scenario);
+            new CreateBBLESupershuttle().runExtensionModifications(scenario);
         }
 
         if (thesisExpConfigGroup.getS60Extension()){
@@ -117,9 +120,10 @@ public class ScenarioRunner {
             modifier.shortenLine("Bus 120 - 11", stopsToCancel);
         }
 
-        if (thesisExpConfigGroup.getFlughafenConnectionAlignment()){
-            new OptimizeConnections().runOptimizer(scenario);
+        if (thesisExpConfigGroup.getTaktAlignment()){
+            alignTakts(scenario);
         }
+
 
         // Finally include fare Zones and parking shapes according to the scenario
         // and finish the scenario
@@ -132,6 +136,63 @@ public class ScenarioRunner {
         log.info("FINISH SCENARIO PREPARATION (SCENARIO RUNNER)");
         log.info("------------");
         return scenario;
+    }
+
+
+    private static void alignTakts(Scenario scenario) {
+        TaktModifier modifier = new TaktModifier(scenario);
+
+        // Double Takt on line S60
+        double newTakt = 15*60;
+        TransitLine lineS60 = scenario.getTransitSchedule().getTransitLines().get(Id.create("S 60 - 1", TransitLine.class));
+
+        for (var routeIdString: Arrays.asList("1", "2","3")){
+            TransitRoute route = lineS60.getRoutes().get(Id.create(routeIdString, TransitRoute.class));
+            modifier.doubleTakt(route, newTakt);
+        }
+
+
+        // Double Takt on bus lines Sindelfingen and Boeblingen
+
+        TransitLine line706 = scenario.getTransitSchedule().getTransitLines().get(Id.create("Bus 706 - 8", TransitLine.class));
+        for (var route: line706.getRoutes().values()){
+            modifier.doubleTakt(route, newTakt);
+        }
+
+        TransitLine line723 = scenario.getTransitSchedule().getTransitLines().get(Id.create("Bus 723 - 7", TransitLine.class));
+        TransitRoute line723route1 = line723.getRoutes().get(Id.create("1", TransitRoute.class));
+
+        double start = (7 * 60 * 60) + (20 * 60);
+        double end = (11 * 60 * 60);
+        modifier.doubleTakt(line723route1, newTakt, start, end);
+
+        start = (12 * 60 * 60);
+        end = (20 * 60 * 60);
+        modifier.doubleTakt(line723route1, newTakt, start, end);
+
+
+        TransitLine line726 = scenario.getTransitSchedule().getTransitLines().get(Id.create("Bus 726 - 7", TransitLine.class));
+        TransitRoute line726route1 = line726.getRoutes().get(Id.create("1", TransitRoute.class));
+
+        newTakt = 30*60;
+        start = (6 * 60 * 60);
+        end = (11 * 60 * 60);
+        modifier.doubleTakt(line726route1, newTakt, start, end);
+
+        start = (12 * 60 * 60);
+        end = (20 * 60 * 60);
+        modifier.doubleTakt(line726route1, newTakt, start, end);
+
+
+        // Double Takt on bus lines in Leinfelden and Echterdingen
+
+        TransitLine line38 = scenario.getTransitSchedule().getTransitLines().get(Id.create("Bus 38 - 17", TransitLine.class));
+        TransitRoute line38route3 = line38.getRoutes().get(Id.create("3", TransitRoute.class));
+        TransitRoute line38route4 = line38.getRoutes().get(Id.create("4", TransitRoute.class));
+
+        modifier.doubleTakt(line38route3, newTakt, start, end);
+        modifier.doubleTakt(line38route4, newTakt, start, end);
+
     }
 
 
@@ -202,7 +263,7 @@ public class ScenarioRunner {
         log.info("S60 Extension: " + thesisExpConfigGroup.getS60Extension());
         log.info("U6 Extension: " + (thesisExpConfigGroup.getU6ExtensionShapeFile() == null ? "false" : thesisExpConfigGroup.getU6ExtensionShapeFile()));
         log.info("SuperShuttle Extension: " + (thesisExpConfigGroup.getSupershuttleExtension()));
-        log.info("Flughafen Connection Alignment Extension: " + (thesisExpConfigGroup.getFlughafenConnectionAlignment()));
+        log.info("Takt Alignment Extension: " + (thesisExpConfigGroup.getTaktAlignment()));
 
         log.info("FINISH VALIDATION (SCENARIO RUNNER)");
         log.info("------------");

@@ -21,17 +21,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CreateSupershuttle {
-    private static final Logger log = Logger.getLogger(CreateSupershuttle.class);
+public class CreateBBLESupershuttle {
+    private static final Logger log = Logger.getLogger(CreateBBLESupershuttle.class);
 
     public static void main(String[] args) {
 
-        CreateSupershuttle.Input input = new CreateSupershuttle.Input();
+        CreateBBLESupershuttle.Input input = new CreateBBLESupershuttle.Input();
         JCommander.newBuilder().addObject(input).build().parse(args);
         log.info("Input network file: " + input.networkFile);
         log.info("Input transit schedule file: " + input.transitSchedule);
         log.info("Input transit vehicle file: " + input.transitSchedule);
-        log.info("Output network file: " + input.outputFile);
+        log.info("Output transit schedule file: " + input.outputFile);
 
         Config config = ConfigUtils.createConfig();
 
@@ -42,8 +42,6 @@ public class CreateSupershuttle {
         config.transit().setTransitScheduleFile(input.transitSchedule);
         config.network().setInputFile(input.networkFile);
         config.vehicles().setVehiclesFile(input.transitVehicles);
-
-
 
         TransitScheduleValidator.ValidationResult resultAfterModifying = TransitScheduleValidator.validateAll(
                 scenario.getTransitSchedule(), scenario.getNetwork());
@@ -64,59 +62,106 @@ public class CreateSupershuttle {
 
 
         // Create additional infrastructure
-        // Create two links from Esslingen Bhf to Boeblingen Bhf and back
 
+        Node stopSindelfingen = network.getNodes().get(Id.createNodeId("tr8005574"));
         Node stopBoeblingen = network.getNodes().get(Id.createNodeId("tr8001920"));
-        Node stopEsslingen = network.getNodes().get(Id.createNodeId("tr8001055"));
+        Node stopLeinfelden = network.getNodes().get(Id.createNodeId("tr8003622"));
+        Node stopEchterdingen = network.getNodes().get(Id.createNodeId("tr8001650"));
 
-        Link linkTrNew9001 = utils.createLink(Id.createLinkId("trNew9001"), stopBoeblingen, stopBoeblingen, TransportMode.train);
-        Link linkTrNew9002 = utils.createLink(Id.createLinkId("trNew9002"), stopBoeblingen, stopEsslingen, TransportMode.train);
-        Link linkTrNew9003 = utils.createLink(Id.createLinkId("trNew9003"), stopEsslingen, stopEsslingen, TransportMode.train);
-        Link linkTrNew9004 = utils.createLink(Id.createLinkId("trNew9004"), stopEsslingen, stopBoeblingen, TransportMode.train);
+        Link linkTrNew9001 = utils.createLink(Id.createLinkId("trNew9001"), stopSindelfingen, stopSindelfingen, TransportMode.train);
+        Link linkTrNew9002 = utils.createLink(Id.createLinkId("trNew9002"), stopSindelfingen, stopBoeblingen, TransportMode.train);
+        Link linkTrNew9003 = utils.createLink(Id.createLinkId("trNew9003"), stopBoeblingen, stopLeinfelden, TransportMode.train);
+        Link linkTrNew9004 = utils.createLink(Id.createLinkId("trNew9004"), stopLeinfelden, stopEchterdingen, TransportMode.train);
+
+        Link linkTrNew9005 = utils.createLink(Id.createLinkId("trNew9005"), stopEchterdingen, stopEchterdingen, TransportMode.train);
+        Link linkTrNew9006 = utils.createLink(Id.createLinkId("trNew9006"), stopEchterdingen, stopLeinfelden, TransportMode.train);
+        Link linkTrNew9007 = utils.createLink(Id.createLinkId("trNew9007"), stopLeinfelden, stopBoeblingen, TransportMode.train);
+        Link linkTrNew9008 = utils.createLink(Id.createLinkId("trNew9008"), stopBoeblingen, stopSindelfingen, TransportMode.train);
 
         network.addLink(linkTrNew9001);
         network.addLink(linkTrNew9002);
         network.addLink(linkTrNew9003);
         network.addLink(linkTrNew9004);
+        network.addLink(linkTrNew9005);
+        network.addLink(linkTrNew9006);
+        network.addLink(linkTrNew9007);
+        network.addLink(linkTrNew9008);
 
 
         // Create additional stop facilities
-        TransitStopFacility stopFacilityTr8001920_10 = utils.createStopFacility(
-                Id.create("8001920.10", TransitStopFacility.class),
+        TransitStopFacility stopFacilityTr8005574_91 = utils.createStopFacility(
+                Id.create("8005574.91", TransitStopFacility.class),
+                network.getNodes().get(Id.createNodeId("tr8005574")).getCoord(),
+                linkTrNew9001.getId(),
+                tS.getFacilities().get(Id.create("8005574",TransitStopFacility.class)).getName(),
+                tS.getFacilities().get(Id.create("8005574",TransitStopFacility.class)).getStopAreaId()
+        );
+
+        TransitStopFacility stopFacilityTr8001920_91 = utils.createStopFacility(
+                Id.create("8001920.91", TransitStopFacility.class),
                 network.getNodes().get(Id.createNodeId("tr8001920")).getCoord(),
                 linkTrNew9001.getId(),
                 tS.getFacilities().get(Id.create("8001920",TransitStopFacility.class)).getName(),
                 tS.getFacilities().get(Id.create("8001920",TransitStopFacility.class)).getStopAreaId()
         );
 
-        TransitStopFacility stopFacilityTr8001055_10 = utils.createStopFacility(
-                Id.create("8001055.10", TransitStopFacility.class),
-                network.getNodes().get(Id.createNodeId("tr8001055")).getCoord(),
-                linkTrNew9002.getId(),
-                tS.getFacilities().get(Id.create("8001055",TransitStopFacility.class)).getName(),
-                tS.getFacilities().get(Id.create("8001055",TransitStopFacility.class)).getStopAreaId()
+        TransitStopFacility stopFacilityTr8003622_91 = utils.createStopFacility(
+                Id.create("8003622.91", TransitStopFacility.class),
+                network.getNodes().get(Id.createNodeId("tr8003622")).getCoord(),
+                linkTrNew9001.getId(),
+                tS.getFacilities().get(Id.create("8003622",TransitStopFacility.class)).getName(),
+                tS.getFacilities().get(Id.create("8003622",TransitStopFacility.class)).getStopAreaId()
         );
 
-        TransitStopFacility stopFacilityTr8001055_11 = utils.createStopFacility(
-                Id.create("8001055.11", TransitStopFacility.class),
-                network.getNodes().get(Id.createNodeId("tr8001055")).getCoord(),
-                linkTrNew9003.getId(),
-                tS.getFacilities().get(Id.create("8001055",TransitStopFacility.class)).getName(),
-                tS.getFacilities().get(Id.create("8001055",TransitStopFacility.class)).getStopAreaId()
+        TransitStopFacility stopFacilityTr8001650_91 = utils.createStopFacility(
+                Id.create("8001650.91", TransitStopFacility.class),
+                network.getNodes().get(Id.createNodeId("tr8001650")).getCoord(),
+                linkTrNew9001.getId(),
+                tS.getFacilities().get(Id.create("8001650",TransitStopFacility.class)).getName(),
+                tS.getFacilities().get(Id.create("8001650",TransitStopFacility.class)).getStopAreaId()
         );
 
-        TransitStopFacility stopFacilityTr8001920_11 = utils.createStopFacility(
-                Id.create("8001920.11", TransitStopFacility.class),
+        TransitStopFacility stopFacilityTr8001650_92 = utils.createStopFacility(
+                Id.create("8001650.92", TransitStopFacility.class),
+                network.getNodes().get(Id.createNodeId("tr8001650")).getCoord(),
+                linkTrNew9001.getId(),
+                tS.getFacilities().get(Id.create("8001650",TransitStopFacility.class)).getName(),
+                tS.getFacilities().get(Id.create("8001650",TransitStopFacility.class)).getStopAreaId()
+        );
+
+        TransitStopFacility stopFacilityTr8003622_92 = utils.createStopFacility(
+                Id.create("8003622.92", TransitStopFacility.class),
+                network.getNodes().get(Id.createNodeId("tr8003622")).getCoord(),
+                linkTrNew9001.getId(),
+                tS.getFacilities().get(Id.create("8003622",TransitStopFacility.class)).getName(),
+                tS.getFacilities().get(Id.create("8003622",TransitStopFacility.class)).getStopAreaId()
+        );
+
+        TransitStopFacility stopFacilityTr8001920_92 = utils.createStopFacility(
+                Id.create("8001920.92", TransitStopFacility.class),
                 network.getNodes().get(Id.createNodeId("tr8001920")).getCoord(),
-                linkTrNew9004.getId(),
+                linkTrNew9001.getId(),
                 tS.getFacilities().get(Id.create("8001920",TransitStopFacility.class)).getName(),
                 tS.getFacilities().get(Id.create("8001920",TransitStopFacility.class)).getStopAreaId()
         );
 
-        tS.addStopFacility(stopFacilityTr8001920_10);
-        tS.addStopFacility(stopFacilityTr8001055_10);
-        tS.addStopFacility(stopFacilityTr8001055_11);
-        tS.addStopFacility(stopFacilityTr8001920_11);
+        TransitStopFacility stopFacilityTr8005574_92 = utils.createStopFacility(
+                Id.create("8005574.92", TransitStopFacility.class),
+                network.getNodes().get(Id.createNodeId("tr8005574")).getCoord(),
+                linkTrNew9001.getId(),
+                tS.getFacilities().get(Id.create("8005574",TransitStopFacility.class)).getName(),
+                tS.getFacilities().get(Id.create("8005574",TransitStopFacility.class)).getStopAreaId()
+        );
+
+        tS.addStopFacility(stopFacilityTr8005574_91);
+        tS.addStopFacility(stopFacilityTr8001920_91);
+        tS.addStopFacility(stopFacilityTr8003622_91);
+        tS.addStopFacility(stopFacilityTr8001650_91);
+
+        tS.addStopFacility(stopFacilityTr8001650_92);
+        tS.addStopFacility(stopFacilityTr8003622_92);
+        tS.addStopFacility(stopFacilityTr8001920_92);
+        tS.addStopFacility(stopFacilityTr8005574_92);
 
 
         // Create a transit vehicle type
@@ -139,16 +184,20 @@ public class CreateSupershuttle {
         line.setName("SuperShuttle-Line-1");
 
         List<TransitRouteStop> transitStops_dir1 = Arrays.asList(
-                tS.getFactory().createTransitRouteStop(stopFacilityTr8001920_10, 0, 0),
-                tS.getFactory().createTransitRouteStop(stopFacilityTr8001055_10, 300, 300)
+                tS.getFactory().createTransitRouteStop(stopFacilityTr8005574_91, 0, 0),
+                tS.getFactory().createTransitRouteStop(stopFacilityTr8001920_91, 60, 60),
+                tS.getFactory().createTransitRouteStop(stopFacilityTr8003622_91, 120, 120),
+                tS.getFactory().createTransitRouteStop(stopFacilityTr8001650_91, 180, 180)
         );
         List<Id<Link>> links_dir1 = transitStops_dir1.stream()
                 .map(transitRouteStop -> transitRouteStop.getStopFacility().getLinkId())
                 .collect(Collectors.toList());
 
         List<TransitRouteStop> transitStops_dir2 = Arrays.asList(
-                tS.getFactory().createTransitRouteStop(stopFacilityTr8001055_11, 0, 0),
-                tS.getFactory().createTransitRouteStop(stopFacilityTr8001920_11, 300, 300)
+                tS.getFactory().createTransitRouteStop(stopFacilityTr8001650_92, 0, 0),
+                tS.getFactory().createTransitRouteStop(stopFacilityTr8003622_92, 60, 60),
+                tS.getFactory().createTransitRouteStop(stopFacilityTr8001920_92, 120, 120),
+                tS.getFactory().createTransitRouteStop(stopFacilityTr8005574_92, 180, 180)
                 );
         List<Id<Link>> links_dir2 = transitStops_dir2.stream()
                 .map(transitRouteStop -> transitRouteStop.getStopFacility().getLinkId())
