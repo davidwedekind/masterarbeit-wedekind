@@ -42,10 +42,10 @@ def create_configs_and_bash_scripts(ctx, excel, sheet, config_template, bash_tem
     tree = ET.parse(config_template)
     root = tree.getroot()
 
-    params = pd.read_excel(excel, sheet_name=sheet)
+    params = pd.read_excel(excel, sheet_name=sheet, engine='openpyxl')
     params = params.astype(str)
 
-    for index, row in pd.read_excel(excel, sheet_name=sheet).iterrows():
+    for index, row in pd.read_excel(excel, sheet_name=sheet, engine='openpyxl').iterrows():
         elements = root.findall(
             "./module[@name='planCalcScore']/parameterset[@type='scoringParameters']/parameterset[@type='modeParams']")
         for element in elements:

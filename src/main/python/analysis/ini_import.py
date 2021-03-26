@@ -123,7 +123,7 @@ def import_gem(ctx, gem, regiosta, db_parameter):
 
     # Step 2: regiostar
     logging.info("Read-in regiostart data...")
-    df_regiosta = pd.read_excel(regiosta, sheet_name='ReferenzGebietsstand2018')
+    df_regiosta = pd.read_excel(regiosta, sheet_name='ReferenzGebietsstand2018', engine='openpyxl')
     df_regiosta['gem'] = df_regiosta.apply(lambda x: str(x['gem']).zfill(8), axis=1)
     df_regiosta = df_regiosta[['gem', 'RegioStaR2', 'RegioStaR4', 'RegioStaR5', 'RegioStaR7']]
     df_regiosta.rename(columns={'gem': 'AGS'}, inplace=True)
@@ -272,12 +272,12 @@ def import_calib(ctx, calib, db_parameter):
     # -- PRE-CALCULATIONS --
     logging.info("Read-in excel file...")
     tables = dict()
-    tables['mid_trip_stats_by_mode_distance_stuttgart'] = pd.read_excel(calib, sheet_name='01a_Klassen_Tidy')
-    tables['mid_trip_stats_by_distance_stuttgart'] = pd.read_excel(calib, sheet_name='01b_Klassen_Tidy')
-    tables['mid_other_param'] = pd.read_excel(calib, sheet_name='02_Wege_Tidy')
-    tables['mid_trip_stats_multiple_level'] = pd.read_excel(calib, sheet_name='03_ModalSplit_Tidy')
-    tables['mid_user_segments'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente_Tidy')
-    tables['vvs_pt_segments'] = pd.read_excel(calib, sheet_name='05_OEVSegmente', skipfooter=10)
+    tables['mid_trip_stats_by_mode_distance_stuttgart'] = pd.read_excel(calib, sheet_name='01a_Klassen_Tidy', engine='openpyxl')
+    tables['mid_trip_stats_by_distance_stuttgart'] = pd.read_excel(calib, sheet_name='01b_Klassen_Tidy', engine='openpyxl')
+    tables['mid_other_param'] = pd.read_excel(calib, sheet_name='02_Wege_Tidy', engine='openpyxl')
+    tables['mid_trip_stats_multiple_level'] = pd.read_excel(calib, sheet_name='03_ModalSplit_Tidy', engine='openpyxl')
+    tables['mid_user_segments'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente_Tidy', engine='openpyxl')
+    tables['vvs_pt_segments'] = pd.read_excel(calib, sheet_name='05_OEVSegmente', skipfooter=10, engine='openpyxl')
 
     for df in tables.values():
         df.columns = df.columns.map(str.lower)
@@ -366,7 +366,7 @@ def import_plausibility_data(ctx, plausibility, db_parameter):
     # -- PRE-CALCULATIONS --
     logging.info("Read-in excel file...")
     tables = dict()
-    tables['mid_plausi_trip_calc'] = pd.read_excel(plausibility, sheet_name='03b_AbsoluteNoTrips', dtype={'ags': str})
+    tables['mid_plausi_trip_calc'] = pd.read_excel(plausibility, sheet_name='03b_AbsoluteNoTrips', dtype={'ags': str}, engine='openpyxl')
 
     for df in tables.values():
         df.columns = df.columns.map(str.lower)
