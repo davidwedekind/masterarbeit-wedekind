@@ -42,7 +42,6 @@ import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.core.utils.gis.PolylineFeatureFactory;
 import org.matsim.core.utils.gis.PolylineFeatureFactory.Builder;
 import org.matsim.core.utils.gis.ShapeFileWriter;
-import org.matsim.masterThesis.prep.CleanFacilitiesAfterCalibration;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 

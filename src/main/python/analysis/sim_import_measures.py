@@ -94,10 +94,9 @@ def import_run(run_dir, db_parameter):
     import_person_2_fares(person_2_fares, db_parameter, run_name)
 
     # TEMP WORKAROUND !!!!!
-    run_dir = "C:/Users/david/Desktop/tmp/" + run_name
-
+    # BECAUSE NETWORK2SHAPEWRITER IS NOT WORKING ON MATH CLUSTER
     # -- NETWORK --
-    network = run_dir + "/network-shp/" + run_name + ".output_network.shp"
+    network = "C:/Users/david/Desktop/tmp/" + run_name + ".output_network.shp"
     import_network(network, db_parameter, run_name)
 
     logging.info("All data successfully imported: " + run_name)

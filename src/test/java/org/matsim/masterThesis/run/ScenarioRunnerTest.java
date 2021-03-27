@@ -17,15 +17,12 @@ public class ScenarioRunnerTest {
     @Ignore
     public void testRunnerWithAllExtensions() throws URISyntaxException {
 
-        //final String configPath = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/stuttgart-v1.0-0.001pct.config_bc.xml";
-        //final String outputDir = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/output/output-bc";
-
-        final String configPath = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/stuttgart-v1.0-0.001pct.config_m5_3.xml";
-        final String outputDir = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/output/output-m5_3";
+        final String configPath = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/stuttgart-v1.0-1pct.config_m4_ex.xml";
+        final String outputDir = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/05_stuttgart-v1.0_scenariotest/output/m4_ex";
 
 
 
-        final int lastIteration = 1;
+        final int lastIteration = 10;
 
         String[] args = new String[]{ configPath };
         Config config = ScenarioRunner.prepareConfig( args );
@@ -41,7 +38,7 @@ public class ScenarioRunnerTest {
         controler.run();
 
         // Exclude when having run time issues
-        // ScenarioRunner.postprocessing( controler );
+        ScenarioRunner.postprocessing( controler );
 
     }
 
