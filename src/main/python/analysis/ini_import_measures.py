@@ -5,11 +5,12 @@ import analysis.ini_import
 
 sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/measures_views"))
 
+
 @click.group()
 def cli():
     pass
 
-
+#### DEPRECATED ####
 @cli.command()
 @click.option('--plans', type=str, default='', help='plans path')
 @click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
@@ -18,6 +19,7 @@ def import_agents(ctx, plans, db_parameter):
     analysis.ini_import.import_agents(ctx, plans, db_parameter)
 
 
+#### DEPRECATED ####
 @cli.command()
 @click.option('--gem', type=str, default='', help='path to vg250 data [.shp]')
 @click.option('--regiosta', type=str, default='', help='path to regioSta data [.xlsx]')
@@ -26,7 +28,7 @@ def import_agents(ctx, plans, db_parameter):
 def import_gem(ctx, gem, regiosta, db_parameter):
     analysis.ini_import.import_gem(ctx, gem, regiosta, db_parameter)
 
-
+#### DEPRECATED ####
 @cli.command()
 @click.option('--kreise', type=str, default='', help='path to vg250 data [.shp]')
 @click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
@@ -35,6 +37,7 @@ def import_kreise(ctx, kreise, db_parameter):
     analysis.ini_import.import_kreise(ctx, kreise, db_parameter)
 
 
+#### DEPRECATED ####
 @cli.command()
 @click.option('--sim_area', type=str, default='', help='sim area shape file')
 @click.option('--reg_stuttgart', type=str, default='', help='sim area shape file')
@@ -44,7 +47,7 @@ def import_kreise(ctx, kreise, db_parameter):
 def import_areas(ctx, sim_area, reg_stuttgart, vvs_area, db_parameter):
     analysis.ini_import.import_areas(ctx, sim_area, reg_stuttgart, vvs_area, db_parameter)
 
-
+#### DEPRECATED ####
 @cli.command()
 @click.option('--shape', type=str, default='', help='path to Germany shapefile [.shp]')
 @click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')

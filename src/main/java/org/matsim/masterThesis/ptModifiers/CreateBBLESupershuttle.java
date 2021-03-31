@@ -8,6 +8,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -30,18 +31,21 @@ public class CreateBBLESupershuttle {
         JCommander.newBuilder().addObject(input).build().parse(args);
         log.info("Input network file: " + input.networkFile);
         log.info("Input transit schedule file: " + input.transitSchedule);
-        log.info("Input transit vehicle file: " + input.transitSchedule);
-        log.info("Output transit schedule file: " + input.outputFile);
+        log.info("Input transit vehicle file: " + input.transitVehicles);
+        log.info("Output directory: " + input.outputDir);
 
         Config config = ConfigUtils.createConfig();
 
-        Scenario scenario = ScenarioUtils.loadScenario(config);
+
         final String epsgCode = "25832";
 
         config.global().setCoordinateSystem("EPSG:" + epsgCode);
         config.transit().setTransitScheduleFile(input.transitSchedule);
         config.network().setInputFile(input.networkFile);
         config.vehicles().setVehiclesFile(input.transitVehicles);
+
+        Scenario scenario = ScenarioUtils.loadScenario(config);
+        new CreateBBLESupershuttle().runExtensionModifications(scenario);
 
         TransitScheduleValidator.ValidationResult resultAfterModifying = TransitScheduleValidator.validateAll(
                 scenario.getTransitSchedule(), scenario.getNetwork());
@@ -50,7 +54,9 @@ public class CreateBBLESupershuttle {
             log.error(errorMessage);
         }
 
-        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(input.outputFile);
+        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(input.outputDir + "/outputSchedule.xml.gz");
+        new MatsimVehicleWriter(scenario.getTransitVehicles()).writeFile(input.outputDir + "/outputTransitVehicles.xml.gz");
+        new NetworkWriter(scenario.getNetwork()).write(input.outputDir + "/outputNetwork.xml.gz");
 
     }
 
@@ -64,35 +70,35 @@ public class CreateBBLESupershuttle {
         // Create additional infrastructure
 
         Node stopSindelfingen = network.getNodes().get(Id.createNodeId("tr8005574"));
-        Node stopBoeblingen = network.getNodes().get(Id.createNodeId("tr8001920"));
+        Node stopBoeblingen = network.getNodes().get(Id.createNodeId("tr8001055"));
         Node stopLeinfelden = network.getNodes().get(Id.createNodeId("tr8003622"));
         Node stopEchterdingen = network.getNodes().get(Id.createNodeId("tr8001650"));
 
-        Link linkTrNew9001 = utils.createLink(Id.createLinkId("trNew9001"), stopSindelfingen, stopSindelfingen, TransportMode.train);
-        Link linkTrNew9002 = utils.createLink(Id.createLinkId("trNew9002"), stopSindelfingen, stopBoeblingen, TransportMode.train);
-        Link linkTrNew9003 = utils.createLink(Id.createLinkId("trNew9003"), stopBoeblingen, stopLeinfelden, TransportMode.train);
-        Link linkTrNew9004 = utils.createLink(Id.createLinkId("trNew9004"), stopLeinfelden, stopEchterdingen, TransportMode.train);
+        Link linkTr99999901 = utils.createLink(Id.createLinkId("tr99999901"), stopSindelfingen, stopSindelfingen, TransportMode.pt);
+        Link linkTr99999902 = utils.createLink(Id.createLinkId("tr99999902"), stopSindelfingen, stopBoeblingen, TransportMode.pt);
+        Link linkTr99999903 = utils.createLink(Id.createLinkId("tr99999903"), stopBoeblingen, stopLeinfelden, TransportMode.pt);
+        Link linkTr99999904 = utils.createLink(Id.createLinkId("tr99999904"), stopLeinfelden, stopEchterdingen, TransportMode.pt);
 
-        Link linkTrNew9005 = utils.createLink(Id.createLinkId("trNew9005"), stopEchterdingen, stopEchterdingen, TransportMode.train);
-        Link linkTrNew9006 = utils.createLink(Id.createLinkId("trNew9006"), stopEchterdingen, stopLeinfelden, TransportMode.train);
-        Link linkTrNew9007 = utils.createLink(Id.createLinkId("trNew9007"), stopLeinfelden, stopBoeblingen, TransportMode.train);
-        Link linkTrNew9008 = utils.createLink(Id.createLinkId("trNew9008"), stopBoeblingen, stopSindelfingen, TransportMode.train);
+        Link linkTr99999905 = utils.createLink(Id.createLinkId("tr99999905"), stopEchterdingen, stopEchterdingen, TransportMode.pt);
+        Link linkTr99999906 = utils.createLink(Id.createLinkId("tr99999906"), stopEchterdingen, stopLeinfelden, TransportMode.pt);
+        Link linkTr99999907 = utils.createLink(Id.createLinkId("tr99999907"), stopLeinfelden, stopBoeblingen, TransportMode.pt);
+        Link linkTr99999908 = utils.createLink(Id.createLinkId("tr99999908"), stopBoeblingen, stopSindelfingen, TransportMode.pt);
 
-        network.addLink(linkTrNew9001);
-        network.addLink(linkTrNew9002);
-        network.addLink(linkTrNew9003);
-        network.addLink(linkTrNew9004);
-        network.addLink(linkTrNew9005);
-        network.addLink(linkTrNew9006);
-        network.addLink(linkTrNew9007);
-        network.addLink(linkTrNew9008);
+        network.addLink(linkTr99999901);
+        network.addLink(linkTr99999902);
+        network.addLink(linkTr99999903);
+        network.addLink(linkTr99999904);
+        network.addLink(linkTr99999905);
+        network.addLink(linkTr99999906);
+        network.addLink(linkTr99999907);
+        network.addLink(linkTr99999908);
 
 
         // Create additional stop facilities
         TransitStopFacility stopFacilityTr8005574_91 = utils.createStopFacility(
                 Id.create("8005574.91", TransitStopFacility.class),
                 network.getNodes().get(Id.createNodeId("tr8005574")).getCoord(),
-                linkTrNew9001.getId(),
+                linkTr99999901.getId(),
                 tS.getFacilities().get(Id.create("8005574",TransitStopFacility.class)).getName(),
                 tS.getFacilities().get(Id.create("8005574",TransitStopFacility.class)).getStopAreaId()
         );
@@ -100,7 +106,7 @@ public class CreateBBLESupershuttle {
         TransitStopFacility stopFacilityTr8001920_91 = utils.createStopFacility(
                 Id.create("8001920.91", TransitStopFacility.class),
                 network.getNodes().get(Id.createNodeId("tr8001920")).getCoord(),
-                linkTrNew9001.getId(),
+                linkTr99999902.getId(),
                 tS.getFacilities().get(Id.create("8001920",TransitStopFacility.class)).getName(),
                 tS.getFacilities().get(Id.create("8001920",TransitStopFacility.class)).getStopAreaId()
         );
@@ -108,7 +114,7 @@ public class CreateBBLESupershuttle {
         TransitStopFacility stopFacilityTr8003622_91 = utils.createStopFacility(
                 Id.create("8003622.91", TransitStopFacility.class),
                 network.getNodes().get(Id.createNodeId("tr8003622")).getCoord(),
-                linkTrNew9001.getId(),
+                linkTr99999903.getId(),
                 tS.getFacilities().get(Id.create("8003622",TransitStopFacility.class)).getName(),
                 tS.getFacilities().get(Id.create("8003622",TransitStopFacility.class)).getStopAreaId()
         );
@@ -116,7 +122,7 @@ public class CreateBBLESupershuttle {
         TransitStopFacility stopFacilityTr8001650_91 = utils.createStopFacility(
                 Id.create("8001650.91", TransitStopFacility.class),
                 network.getNodes().get(Id.createNodeId("tr8001650")).getCoord(),
-                linkTrNew9001.getId(),
+                linkTr99999904.getId(),
                 tS.getFacilities().get(Id.create("8001650",TransitStopFacility.class)).getName(),
                 tS.getFacilities().get(Id.create("8001650",TransitStopFacility.class)).getStopAreaId()
         );
@@ -124,7 +130,7 @@ public class CreateBBLESupershuttle {
         TransitStopFacility stopFacilityTr8001650_92 = utils.createStopFacility(
                 Id.create("8001650.92", TransitStopFacility.class),
                 network.getNodes().get(Id.createNodeId("tr8001650")).getCoord(),
-                linkTrNew9001.getId(),
+                linkTr99999905.getId(),
                 tS.getFacilities().get(Id.create("8001650",TransitStopFacility.class)).getName(),
                 tS.getFacilities().get(Id.create("8001650",TransitStopFacility.class)).getStopAreaId()
         );
@@ -132,7 +138,7 @@ public class CreateBBLESupershuttle {
         TransitStopFacility stopFacilityTr8003622_92 = utils.createStopFacility(
                 Id.create("8003622.92", TransitStopFacility.class),
                 network.getNodes().get(Id.createNodeId("tr8003622")).getCoord(),
-                linkTrNew9001.getId(),
+                linkTr99999906.getId(),
                 tS.getFacilities().get(Id.create("8003622",TransitStopFacility.class)).getName(),
                 tS.getFacilities().get(Id.create("8003622",TransitStopFacility.class)).getStopAreaId()
         );
@@ -140,7 +146,7 @@ public class CreateBBLESupershuttle {
         TransitStopFacility stopFacilityTr8001920_92 = utils.createStopFacility(
                 Id.create("8001920.92", TransitStopFacility.class),
                 network.getNodes().get(Id.createNodeId("tr8001920")).getCoord(),
-                linkTrNew9001.getId(),
+                linkTr99999907.getId(),
                 tS.getFacilities().get(Id.create("8001920",TransitStopFacility.class)).getName(),
                 tS.getFacilities().get(Id.create("8001920",TransitStopFacility.class)).getStopAreaId()
         );
@@ -148,7 +154,7 @@ public class CreateBBLESupershuttle {
         TransitStopFacility stopFacilityTr8005574_92 = utils.createStopFacility(
                 Id.create("8005574.92", TransitStopFacility.class),
                 network.getNodes().get(Id.createNodeId("tr8005574")).getCoord(),
-                linkTrNew9001.getId(),
+                linkTr99999908.getId(),
                 tS.getFacilities().get(Id.create("8005574",TransitStopFacility.class)).getName(),
                 tS.getFacilities().get(Id.create("8005574",TransitStopFacility.class)).getStopAreaId()
         );
@@ -256,8 +262,8 @@ public class CreateBBLESupershuttle {
         @Parameter(names = "-transitVehicleFile")
         private String transitVehicles;
 
-        @Parameter(names = "-output")
-        private String outputFile;
+        @Parameter(names = "-outputDir")
+        private String outputDir;
 
     }
 

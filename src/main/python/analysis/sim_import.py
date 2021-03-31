@@ -42,6 +42,7 @@ def import_run_data(ctx, parent_dir, db_parameter, str_filter):
 
     """
 
+
     logging.info('Search for folders in: ' + parent_dir)
     if str_filter is not None:
         logging.info('Filter - Folders start with string: ' + str_filter)
@@ -55,6 +56,7 @@ def import_run_data(ctx, parent_dir, db_parameter, str_filter):
 
     # -- DATA IMPORTS --
     logging.info('The following run(s) will be imported: ' + '[' + ", ".join(dir_contents) + ']')
+
 
     for run_dir in dir_contents:
         import_run(parent_dir + "/output-" + run_dir, db_parameter)
@@ -163,7 +165,9 @@ def parse_trips_file(trips):
     gdf_trips['dep_time'] = gdf_trips['dep_time'].apply(convert_time)
     gdf_trips['trav_time'] = gdf_trips['trav_time'].apply(convert_time)
     gdf_trips['wait_time'] = gdf_trips['wait_time'].apply(convert_time)
-    gdf_trips['arr_time'] = gdf_trips['dep_time'] + gdf_trips['trav_time'] + gdf_trips['wait_time']
+
+    # Checked on 30/03/2021: arr_time = trav_time + dep_time (without wait time)
+    gdf_trips['arr_time'] = gdf_trips['dep_time'] + gdf_trips['trav_time']
     gdf_trips['trip_speed'] = gdf_trips.apply(lambda x:
                                               calculate_speed(x['traveled_distance'], x['trav_time'] + x['wait_time']),
                                               axis=1

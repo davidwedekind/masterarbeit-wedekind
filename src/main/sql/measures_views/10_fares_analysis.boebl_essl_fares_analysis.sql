@@ -1,10 +1,5 @@
-WITH sim_trips_enriched AS(
-	SELECT * FROM matsim_output.sim_trips_enriched_bc UNION
-	SELECT * FROM matsim_output.sim_trips_enriched_measures
-),
-
-boebl_essl_trips AS (
-	SELECT * FROM sim_trips_enriched
+WITH boebl_essl_trips AS (
+	SELECT * FROM matsim_output.sim_trips_enriched
 	WHERE 
 		((start_kreis_ags = '08115' AND end_kreis_ags = '08116')
 		OR (end_kreis_ags = '08115' AND start_kreis_ags = '08116'))

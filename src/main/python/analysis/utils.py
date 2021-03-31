@@ -57,7 +57,7 @@ def load_df_to_database(df, update_mode, db_parameter, schema, table_name, meta_
     else:
         logging.info('Uploading to database')
         if big_df_size(df_import):
-            import_data_chunks(df_import, table_name, db_engine, schema, geom_data_types=None)
+            import_data_chunks(df_import, update_mode, table_name, db_engine, schema, geom_data_types=None)
         else:
             df_import.to_sql(table_name, db_engine, schema=schema, index=False, if_exists=update_mode, method='multi')
 

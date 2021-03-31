@@ -69,8 +69,8 @@ public class CreateS60Extension {
         Node stopGoldberg = network.getNodes().get(Id.createNodeId("tr8005201"));
         Node stopLeinfelden = network.getNodes().get(Id.createNodeId("tr8003622"));
 
-        Link linkTrNew0001 = utils.createLink(Id.createLinkId("trNew0001"), stopGoldberg, stopLeinfelden, TransportMode.train);
-        Link linkTrNew0002 = utils.createLink(Id.createLinkId("trNew0002"), stopLeinfelden, stopGoldberg, TransportMode.train);
+        Link linkTrNew0001 = utils.createLink(Id.createLinkId("trNew0001"), stopGoldberg, stopLeinfelden, TransportMode.pt);
+        Link linkTrNew0002 = utils.createLink(Id.createLinkId("trNew0002"), stopLeinfelden, stopGoldberg, TransportMode.pt);
 
         network.addLink(linkTrNew0001);
         network.addLink(linkTrNew0002);

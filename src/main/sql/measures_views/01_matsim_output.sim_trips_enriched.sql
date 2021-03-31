@@ -31,10 +31,15 @@ SELECT
 	s_krs.ags start_kreis_ags,
 	s_krs.gen start_kreis_gen,
 	e_krs.ags end_kreis_ags,
-	e_krs.gen end_kreis_gen
+	e_krs.gen end_kreis_gen,
+	s_gem.ags start_gem_ags,
+	s_gem.gen start_gem_gen,
+	e_gem.ags end_gem_ags,
+	e_gem.gen end_gem_gen
 FROM (matsim_input.sim_agents_enriched h
 JOIN matsim_output.sim_trips_raw t ON ((h.person_id = t.person)))
 JOIN raw.kreise s_krs ON ST_WITHIN(ST_SetSRID( ST_Point(t.start_x, t.start_y), 25832), s_krs.geometry)
 JOIN raw.kreise e_krs ON ST_WITHIN(ST_SetSRID( ST_Point(t.end_x, t.end_y), 25832), e_krs.geometry)
+JOIN raw.gemeinden s_gem ON ST_WITHIN(ST_SetSRID( ST_Point(t.start_x, t.start_y), 25832), s_gem.geometry)
+JOIN raw.gemeinden e_gem ON ST_WITHIN(ST_SetSRID( ST_Point(t.end_x, t.end_y), 25832), e_gem.geometry)
 WHERE (h.subpop = 'region_stuttgart'::text)
-AND (t.run_name != 'bc')

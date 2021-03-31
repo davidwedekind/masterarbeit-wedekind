@@ -57,8 +57,10 @@ def import_run_data(ctx, parent_dir, db_parameter, str_filter):
     for run_dir in dir_contents:
         import_run(parent_dir + "/output-" + run_dir, db_parameter)
 
+    """
     # -- VIEW UPDATES --
     analysis.sim_import.update_views(db_parameter, sql_dir)
+    """
 
 
 def import_run(run_dir, db_parameter):
@@ -67,12 +69,10 @@ def import_run(run_dir, db_parameter):
     of one run output to a postgres database.
     """
 
-
     # -- PRE-CALCULATIONS --
     run_name = run_dir.rsplit("/", 1)[1].replace("output-", "")
     logging.info("Start importing run: " + run_name)
 
-    
     # -- TRIPS IMPORT --
     trips = run_dir + "/" + run_name + ".output_trips.csv.gz"
     analysis.sim_import.import_trips(trips, db_parameter, run_name)
@@ -96,7 +96,7 @@ def import_run(run_dir, db_parameter):
     # TEMP WORKAROUND !!!!!
     # BECAUSE NETWORK2SHAPEWRITER IS NOT WORKING ON MATH CLUSTER
     # -- NETWORK --
-    network = "C:/Users/david/Desktop/tmp/" + run_name + ".output_network.shp"
+    network = "C:/Users/david/Desktop/tmp/network-shp/" + run_name + ".output_network.shp"
     import_network(network, db_parameter, run_name)
 
     logging.info("All data successfully imported: " + run_name)
@@ -302,6 +302,7 @@ def import_network(network, db_parameter, run_name):
     # -- PRE-CALCULATIONS --
     logging.info("Read-in network shape file...")
     gdf_network = gpd.read_file(network)
+    gdf_network['run_name'] = run_name
 
     # -- IMPORT --
     table_name = 'network'
