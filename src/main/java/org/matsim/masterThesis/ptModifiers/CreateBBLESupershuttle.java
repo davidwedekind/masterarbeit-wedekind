@@ -103,12 +103,12 @@ public class CreateBBLESupershuttle {
                 tS.getFacilities().get(Id.create("8005574",TransitStopFacility.class)).getStopAreaId()
         );
 
-        TransitStopFacility stopFacilityTr8001920_91 = utils.createStopFacility(
-                Id.create("8001920.91", TransitStopFacility.class),
-                network.getNodes().get(Id.createNodeId("tr8001920")).getCoord(),
+        TransitStopFacility stopFacilityTr8001055_91 = utils.createStopFacility(
+                Id.create("8001055.91", TransitStopFacility.class),
+                network.getNodes().get(Id.createNodeId("tr8001055")).getCoord(),
                 linkTr99999902.getId(),
-                tS.getFacilities().get(Id.create("8001920",TransitStopFacility.class)).getName(),
-                tS.getFacilities().get(Id.create("8001920",TransitStopFacility.class)).getStopAreaId()
+                tS.getFacilities().get(Id.create("8001055",TransitStopFacility.class)).getName(),
+                tS.getFacilities().get(Id.create("8001055",TransitStopFacility.class)).getStopAreaId()
         );
 
         TransitStopFacility stopFacilityTr8003622_91 = utils.createStopFacility(
@@ -143,12 +143,12 @@ public class CreateBBLESupershuttle {
                 tS.getFacilities().get(Id.create("8003622",TransitStopFacility.class)).getStopAreaId()
         );
 
-        TransitStopFacility stopFacilityTr8001920_92 = utils.createStopFacility(
-                Id.create("8001920.92", TransitStopFacility.class),
-                network.getNodes().get(Id.createNodeId("tr8001920")).getCoord(),
+        TransitStopFacility stopFacilityTr8001055_92 = utils.createStopFacility(
+                Id.create("8001055.92", TransitStopFacility.class),
+                network.getNodes().get(Id.createNodeId("tr8001055")).getCoord(),
                 linkTr99999907.getId(),
-                tS.getFacilities().get(Id.create("8001920",TransitStopFacility.class)).getName(),
-                tS.getFacilities().get(Id.create("8001920",TransitStopFacility.class)).getStopAreaId()
+                tS.getFacilities().get(Id.create("8001055",TransitStopFacility.class)).getName(),
+                tS.getFacilities().get(Id.create("8001055",TransitStopFacility.class)).getStopAreaId()
         );
 
         TransitStopFacility stopFacilityTr8005574_92 = utils.createStopFacility(
@@ -160,13 +160,13 @@ public class CreateBBLESupershuttle {
         );
 
         tS.addStopFacility(stopFacilityTr8005574_91);
-        tS.addStopFacility(stopFacilityTr8001920_91);
+        tS.addStopFacility(stopFacilityTr8001055_91);
         tS.addStopFacility(stopFacilityTr8003622_91);
         tS.addStopFacility(stopFacilityTr8001650_91);
 
         tS.addStopFacility(stopFacilityTr8001650_92);
         tS.addStopFacility(stopFacilityTr8003622_92);
-        tS.addStopFacility(stopFacilityTr8001920_92);
+        tS.addStopFacility(stopFacilityTr8001055_92);
         tS.addStopFacility(stopFacilityTr8005574_92);
 
 
@@ -191,7 +191,7 @@ public class CreateBBLESupershuttle {
 
         List<TransitRouteStop> transitStops_dir1 = Arrays.asList(
                 tS.getFactory().createTransitRouteStop(stopFacilityTr8005574_91, 0, 0),
-                tS.getFactory().createTransitRouteStop(stopFacilityTr8001920_91, 60, 60),
+                tS.getFactory().createTransitRouteStop(stopFacilityTr8001055_91, 60, 60),
                 tS.getFactory().createTransitRouteStop(stopFacilityTr8003622_91, 120, 120),
                 tS.getFactory().createTransitRouteStop(stopFacilityTr8001650_91, 180, 180)
         );
@@ -202,7 +202,7 @@ public class CreateBBLESupershuttle {
         List<TransitRouteStop> transitStops_dir2 = Arrays.asList(
                 tS.getFactory().createTransitRouteStop(stopFacilityTr8001650_92, 0, 0),
                 tS.getFactory().createTransitRouteStop(stopFacilityTr8003622_92, 60, 60),
-                tS.getFactory().createTransitRouteStop(stopFacilityTr8001920_92, 120, 120),
+                tS.getFactory().createTransitRouteStop(stopFacilityTr8001055_92, 120, 120),
                 tS.getFactory().createTransitRouteStop(stopFacilityTr8005574_92, 180, 180)
                 );
         List<Id<Link>> links_dir2 = transitStops_dir2.stream()
