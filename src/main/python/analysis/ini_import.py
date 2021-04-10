@@ -278,6 +278,7 @@ def import_calib(ctx, calib, db_parameter):
     tables['mid_trip_stats_multiple_level'] = pd.read_excel(calib, sheet_name='03_ModalSplit_Tidy', engine='openpyxl')
     tables['mid_user_segments'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente_Tidy', engine='openpyxl')
     tables['vvs_pt_segments'] = pd.read_excel(calib, sheet_name='05_OEVSegmente', skipfooter=10, engine='openpyxl')
+    tables['boeblingen_esslingen_bvwp'] = pd.read_excel(calib, sheet_name='06_BVWP', engine='openpyxl')
 
     for df in tables.values():
         df.columns = df.columns.map(str.lower)
@@ -325,6 +326,13 @@ def import_calib(ctx, calib, db_parameter):
         'source_url': 'https://www.vvs.de/download/Zahlen-Daten-Fakten-2019.pdf',
         'source_year': '2019',
         'source_download_date': '2021-02-28'
+    }, 'boeblingen_esslingen_bvwp': {
+        'title': 'BVWP Verpflechtungsprognose Mode Anteile',
+        'description': 'BVWP Verpflechtungsprognose Mode Anteile Boeblingen Esslingen',
+        'source_name': 'BVWP',
+        'source_url': 'Nan',
+        'source_year': '2010',
+        'source_download_date': 'Nan'
     }}
 
     # -- IMPORT --

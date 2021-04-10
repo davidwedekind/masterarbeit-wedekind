@@ -1,0 +1,52 @@
+-- br_analysis.br_boebl_essl
+
+-- Provide basic bike and ride usage indicators for specific Boeblingen - Esslingen relation
+
+-- @author dwedekind
+
+
+-- Count 'pt_with_bike_used' trips in the base case
+WITH TRIP_STATS_BC AS
+	(SELECT SIM_TRIPS_ENRICHED_BC.RUN_NAME,
+			SIM_TRIPS_ENRICHED_BC.MATSIM_RAW_MAIN_MODE,
+			COUNT(SIM_TRIPS_ENRICHED_BC.TRIP_ID) AS TRIPS_BC
+	 
+		FROM MATSIM_OUTPUT.SIM_TRIPS_ENRICHED_BC
+	 
+	 	-- Set filter to only trips on relation Boeblingen - Esslingen
+		WHERE SIM_TRIPS_ENRICHED_BC.MATSIM_RAW_MAIN_MODE = 'pt_with_bike_used'
+			AND ((START_KREIS_AGS = '08115' AND END_KREIS_AGS = '08116')
+								OR (END_KREIS_AGS = '08115' AND START_KREIS_AGS = '08116'))
+	 
+		GROUP BY SIM_TRIPS_ENRICHED_BC.RUN_NAME,
+			SIM_TRIPS_ENRICHED_BC.MATSIM_RAW_MAIN_MODE),
+			
+	-- Count 'pt_with_bike_used' for each measure case
+	TRIP_STATS_MEASURES AS
+	(SELECT SIM_TRIPS_ENRICHED_MEASURES.RUN_NAME,
+			SIM_TRIPS_ENRICHED_MEASURES.MATSIM_RAW_MAIN_MODE,
+			COUNT(SIM_TRIPS_ENRICHED_MEASURES.TRIP_ID) AS TRIPS_M
+	 
+		FROM MATSIM_OUTPUT.SIM_TRIPS_ENRICHED_MEASURES
+	 
+	 	-- Set filter to only trips on relation Boeblingen - Esslingen
+		WHERE SIM_TRIPS_ENRICHED_MEASURES.MATSIM_RAW_MAIN_MODE = 'pt_with_bike_used'
+			AND ((START_KREIS_AGS = '08115' AND END_KREIS_AGS = '08116')
+								OR (END_KREIS_AGS = '08115' AND START_KREIS_AGS = '08116'))
+	 
+		GROUP BY SIM_TRIPS_ENRICHED_MEASURES.RUN_NAME,
+			SIM_TRIPS_ENRICHED_MEASURES.MATSIM_RAW_MAIN_MODE)
+			
+
+-- Directly compare bike and ride trips of bc runs to measure runs
+-- Calculate the difference
+SELECT M.RUN_NAME,
+	BC.MATSIM_RAW_MAIN_MODE,
+	BC.TRIPS_BC,
+	M.TRIPS_M,
+	(M.TRIPS_M - BC.TRIPS_BC) AS TRIPS_DIFF
+FROM (TRIP_STATS_BC BC
+	  		JOIN TRIP_STATS_MEASURES M ON ((BC.MATSIM_RAW_MAIN_MODE = M.MATSIM_RAW_MAIN_MODE)))
+			
+ORDER BY M.RUN_NAME,
+	BC.MATSIM_RAW_MAIN_MODE

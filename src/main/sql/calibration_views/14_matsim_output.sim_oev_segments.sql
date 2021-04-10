@@ -1,26 +1,34 @@
-WITH legs_within_vvs AS(
-	SELECT
-		legs.*
-	FROM matsim_output.sim_legs_raw legs
-	INNER JOIN raw.areas vvs
-	ON ST_Within(legs.geometry, vvs.geometry)
-	WHERE vvs.subpop = 'vvs_area'
-),
+-- matsim_output.sim_oev_segments
 
-pt_group_per_trip AS(
-	SELECT
-		run_name,
-		trip_id,
-		pt_group,
-		COUNT(index) counter
-	FROM legs_within_vvs
-	WHERE mode = 'pt'
-	GROUP BY run_name, trip_id, pt_group)
+-- Determine the usage of the different pt submodes
+-- namely ssb (Stuttgarter Straßenbahnen), sbahn (S-Bahn Stuttgart), bus, dbregio (for simplification all other)
 
-SELECT
-	run_name,
-	pt_group,
-	COUNT(trip_id) sgmt_abs,
-	COUNT(trip_id) / SUM(COUNT(trip_id)) OVER (partition by run_name) AS sgmt_rel
-FROM pt_group_per_trip
-GROUP BY run_name, pt_group
+-- @author dwedekind
+
+-- Filter legs to legs within the vvs area only
+WITH LEGS_WITHIN_VVS AS
+	(SELECT LEGS.*
+		FROM MATSIM_OUTPUT.SIM_LEGS_RAW LEGS
+		INNER JOIN RAW.AREAS VVS ON ST_WITHIN(LEGS.GEOMETRY,VVS.GEOMETRY)
+		WHERE VVS.SUBPOP = 'vvs_area' ),
+	
+	-- Count by trip
+	PT_GROUP_PER_TRIP AS
+	(SELECT RUN_NAME
+			,TRIP_ID
+			,PT_GROUP
+			,COUNT(INDEX) COUNTER
+		FROM LEGS_WITHIN_VVS
+		WHERE MODE = 'pt'
+		GROUP BY RUN_NAME,
+			TRIP_ID,
+			PT_GROUP)
+
+-- Count total
+SELECT RUN_NAME
+	,PT_GROUP
+	,COUNT(TRIP_ID) SGMT_ABS
+	,COUNT(TRIP_ID) / SUM(COUNT(TRIP_ID)) OVER (PARTITION BY RUN_NAME) AS SGMT_REL
+FROM PT_GROUP_PER_TRIP
+GROUP BY RUN_NAME,
+	PT_GROUP

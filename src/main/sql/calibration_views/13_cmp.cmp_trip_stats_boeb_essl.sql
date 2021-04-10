@@ -1,39 +1,60 @@
-WITH tmp_1 AS (
-	SELECT
-		*,
-		CASE
-			WHEN matsim_main_mode='car' THEN 'Miv'
-			WHEN matsim_main_mode='ride' THEN 'Miv'
-			WHEN matsim_main_mode='pt' THEN 'Oepnv'
-			WHEN matsim_main_mode='bike' THEN 'Rad'
-			WHEN matsim_main_mode='walk' THEN 'Fuß'
-		END As mid_main_mode
-	FROM matsim_output.sim_trip_stats_boeb_essl
-),
+-- cmp.cmp_trip_stats_boeb_essl
 
-tmp_2 AS (
-	SELECT
-		run_name,
-		mid_main_mode,
-		SUM(sim_trips_abs_scaled_100) sim_trips_abs_scaled_100,
-		SUM(sim_mode_share) sim_mode_share
-	FROM tmp_1
-	GROUP BY run_name, mid_main_mode
-	ORDER BY run_name, mid_main_mode
-)
+-- Compare simulation values on Esslingen - Boeblingen county relation
+-- to values in BVWP Verpflechtungsprognose
 
-SELECT
-	*,
-	CASE
-		WHEN mid_main_mode='Miv' THEN 0.863326
-		WHEN mid_main_mode='Oepnv' THEN 0.117583
-		WHEN mid_main_mode='Rad' THEN 0.019091
-		WHEN mid_main_mode='Fuß' THEN 0.0
-	END As bvwp_mode_share,
-		CASE
-		WHEN mid_main_mode='Miv' THEN 0.863326*(SUM(sim_trips_abs_scaled_100) OVER (partition by run_name))
-		WHEN mid_main_mode='Oepnv' THEN 0.117583*(SUM(sim_trips_abs_scaled_100) OVER (partition by run_name))
-		WHEN mid_main_mode='Rad' THEN 0.019091*(SUM(sim_trips_abs_scaled_100) OVER (partition by run_name))
-		WHEN mid_main_mode='Fuß' THEN 0.0*(SUM(sim_trips_abs_scaled_100) OVER (partition by run_name))
-	END As bvwp_trips_abs
-FROM tmp_2
+-- @author dwedekind
+
+
+-- First, match the simulation modes to the corresponding modes in the BVWP Verpflechtungsprognose
+WITH TMP_1 AS
+	(SELECT *
+			,CASE
+							WHEN MATSIM_MAIN_MODE = 'car' THEN 'Miv'
+							WHEN MATSIM_MAIN_MODE = 'ride' THEN 'Miv'
+							WHEN MATSIM_MAIN_MODE = 'pt' THEN 'Oepnv'
+							WHEN MATSIM_MAIN_MODE = 'bike' THEN 'Rad'
+							WHEN MATSIM_MAIN_MODE = 'walk' THEN 'Fuß'
+			END AS BVWP_MAIN_MODE
+		FROM MATSIM_OUTPUT.SIM_TRIP_STATS_BOEB_ESSL),
+
+-- Second, group by these newly identified values
+	TMP_2 AS
+	(SELECT RUN_NAME
+			,BVWP_MAIN_MODE
+			,SUM(SIM_TRIPS_ABS_SCALED_100) SIM_TRIPS_ABS_SCALED_100
+			,SUM(SIM_MODE_SHARE) SIM_MODE_SHARE
+		FROM TMP_1
+		GROUP BY RUN_NAME,
+			BVWP_MAIN_MODE
+		ORDER BY RUN_NAME,
+			BVWP_MAIN_MODE),
+			
+-- Third, create BVWP comparable
+BVWP AS
+	(SELECT RUNS.RUN_NAME
+			,CAL.*
+		FROM CAL.BOEBLINGEN_ESSLINGEN_BVWP CAL
+		CROSS JOIN
+			(SELECT DISTINCT(RUN_NAME)
+				FROM MATSIM_OUTPUT.SIM_TRIP_STATS_BOEB_ESSL) AS RUNS
+		ORDER BY RUN_NAME)
+
+
+-- Finally, compare simulation with BVWP values
+SELECT BVWP.RUN_NAME
+	,BVWP.BVWP_MAIN_MODE
+	,COALESCE(SIM_TRIPS_ABS_SCALED_100, 0) SIM_TRIPS_ABS_SCALED_100
+	,COALESCE(SIM_MODE_SHARE, 0) SIM_MODE_SHARE
+	,BVWP.BVWP_MODE_SHARE
+	
+	-- Calculate the rebased absolut trip values as
+	-- the product of sum of trips over modes on relation in the simulation * BVWP mode share
+	,COALESCE( BVWP.BVWP_MODE_SHARE * (SUM(SIM_TRIPS_ABS_SCALED_100) OVER (PARTITION BY BVWP.RUN_NAME)), 0) BVWP_TRIPS_ABS
+
+FROM BVWP
+LEFT JOIN TMP_2
+ON TMP_2.BVWP_MAIN_MODE = BVWP.BVWP_MAIN_MODE
+AND TMP_2.RUN_NAME = BVWP.RUN_NAME
+
+ORDER BY RUN_NAME, BVWP_MAIN_MODE

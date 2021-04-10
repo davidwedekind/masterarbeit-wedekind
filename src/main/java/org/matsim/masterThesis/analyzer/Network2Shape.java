@@ -57,7 +57,8 @@ public class Network2Shape {
         Network2Shape.Input input = new Network2Shape.Input();
         JCommander.newBuilder().addObject(input).build().parse(args);
         log.info("Network file: " + input.network);
-        String outputDirectory = Paths.get(input.network).getParent().toString();
+        String outputDirectory = input.outputDir;
+        log.info("Output directory: " + outputDirectory);
 
         Config config = ConfigUtils.createConfig();
         config.controler().setRunId(input.runId);
@@ -158,6 +159,9 @@ public class Network2Shape {
 
         @Parameter(names = "-runId")
         private String runId;
+
+        @Parameter(names = "-outputDir")
+        private String outputDir;
 
     }
 

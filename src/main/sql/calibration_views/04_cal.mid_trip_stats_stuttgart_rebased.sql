@@ -1,24 +1,35 @@
-WITH rebased AS (	
-	SELECT
-		run_name,
-		area,
-		matsim_main_mode,
-		SUM(mid_trips_abs_rebased) mid_trips_abs_rebased,
-		(SUM(mid_trips_abs_rebased) / SUM(SUM(mid_trips_abs_rebased)) OVER (partition by run_name)) mid_mode_share_rebased
-	FROM cal.mid_trip_stats_by_mode_distance_stuttgart_rebased
-	GROUP BY run_name, area, matsim_main_mode
-	ORDER BY run_name, area, matsim_main_mode
-)
+-- cal.mid_trip_stats_stuttgart_rebased
 
-SELECT
-	reb.run_name,
-	reb.area,
-	reb.matsim_main_mode,
-	cal.mid_trips_abs,
-	reb.mid_trips_abs_rebased,
-	cal.mid_mode_share/100 mid_mode_share,
-	reb.mid_mode_share_rebased
-FROM rebased reb
-INNER JOIN cal.mid_trip_stats_multiple_level cal
-ON cal.area = reb.area
-AND cal.matsim_main_mode = reb.matsim_main_mode
+-- Aggregate rebased Stuttgart mid trips by mode to construct rebased overall Stuttgart Mid Values
+-- Join original Stuttgart Mid values (which cannot be met due to missing trips in Senozon model)
+
+-- @author dwedekind
+
+WITH REBASED
+AS (
+	SELECT RUN_NAME
+		,AREA
+		,MATSIM_MAIN_MODE
+		,SUM(MID_TRIPS_ABS_REBASED) MID_TRIPS_ABS_REBASED
+		,(SUM(MID_TRIPS_ABS_REBASED) / SUM(SUM(MID_TRIPS_ABS_REBASED)) OVER (PARTITION BY RUN_NAME)) MID_MODE_SHARE_REBASED
+	FROM CAL.MID_TRIP_STATS_BY_MODE_DISTANCE_STUTTGART_REBASED
+	
+	GROUP BY RUN_NAME
+		,AREA
+		,MATSIM_MAIN_MODE
+	ORDER BY RUN_NAME
+		,AREA
+		,MATSIM_MAIN_MODE
+	)
+	
+SELECT REB.RUN_NAME
+	,REB.AREA
+	,REB.MATSIM_MAIN_MODE
+	,CAL.MID_TRIPS_ABS
+	,REB.MID_TRIPS_ABS_REBASED
+	,CAL.MID_MODE_SHARE / 100 MID_MODE_SHARE
+	,REB.MID_MODE_SHARE_REBASED
+	
+FROM REBASED REB
+INNER JOIN CAL.MID_TRIP_STATS_MULTIPLE_LEVEL CAL ON CAL.AREA = REB.AREA
+	AND CAL.MATSIM_MAIN_MODE = REB.MATSIM_MAIN_MODE

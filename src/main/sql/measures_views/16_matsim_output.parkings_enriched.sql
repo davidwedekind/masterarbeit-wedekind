@@ -1,8 +1,17 @@
-SELECT
-    p.*,
-    n.zone_name,
-    n.zone_group,
-    n.link_length,
-    n.geometry
-FROM matsim_output.parkings p
-LEFT JOIN matsim_output.network n ON ((p."linkId" = n."Id") AND (p."run_name" = n."run_name"))
+-- matsim_output.parkings_enriched
+
+-- Enrich the parking.csv data with some network information
+-- where the parking occurs
+
+-- @author dwedekind
+
+
+SELECT P.*,
+	N.ZONE_NAME,
+	N.ZONE_GROUP,
+	N."Length" LINK_LENGTH,
+	N.GEOMETRY
+	
+FROM MATSIM_OUTPUT.PARKINGS P
+LEFT JOIN MATSIM_OUTPUT.NETWORK N ON ((P."linkId" = N."Id") 
+	AND (P."run_name" = N."run_name"))

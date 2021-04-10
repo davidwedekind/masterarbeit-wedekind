@@ -1,9 +1,15 @@
-SELECT
-	sim.run_name,
-	sim.pt_group,
-	sim.sgmt_rel sim_sgmt_rel,
-	cal.sgmt_rel/100 cal_sgmt_rel
-FROM matsim_output.sim_oev_segments sim
-LEFT JOIN cal.vvs_pt_segments cal
-ON cal.pt_segment = sim.pt_group
-ORDER BY sim.run_name, sim.pt_group
+-- cmp.cmp_oev_segments
+
+-- Compare the usage of the different pt submodes used in the simulation to vvs numbers
+-- Submodes are: ssb (Stuttgarter Straßenbahnen), sbahn (S-Bahn Stuttgart), bus, dbregio (for simplification all other)
+
+-- @author dwedekind
+
+SELECT SIM.RUN_NAME
+	,SIM.PT_GROUP
+	,SIM.SGMT_REL SIM_SGMT_REL
+	,CAL.SGMT_REL / 100 CAL_SGMT_REL
+FROM MATSIM_OUTPUT.SIM_OEV_SEGMENTS SIM
+LEFT JOIN CAL.VVS_PT_SEGMENTS CAL ON CAL.PT_SEGMENT = SIM.PT_GROUP
+ORDER BY SIM.RUN_NAME,
+	SIM.PT_GROUP

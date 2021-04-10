@@ -57,10 +57,9 @@ def import_run_data(ctx, parent_dir, db_parameter, str_filter):
     for run_dir in dir_contents:
         import_run(parent_dir + "/output-" + run_dir, db_parameter)
 
-    """
+
     # -- VIEW UPDATES --
     analysis.sim_import.update_views(db_parameter, sql_dir)
-    """
 
 
 def import_run(run_dir, db_parameter):
@@ -72,6 +71,7 @@ def import_run(run_dir, db_parameter):
     # -- PRE-CALCULATIONS --
     run_name = run_dir.rsplit("/", 1)[1].replace("output-", "")
     logging.info("Start importing run: " + run_name)
+
 
     # -- TRIPS IMPORT --
     trips = run_dir + "/" + run_name + ".output_trips.csv.gz"
@@ -92,6 +92,7 @@ def import_run(run_dir, db_parameter):
     # -- PERSON2FARES --
     person_2_fares = run_dir + "/" + run_name + ".output_person2Fare.csv.gz"
     import_person_2_fares(person_2_fares, db_parameter, run_name)
+
 
     # TEMP WORKAROUND !!!!!
     # BECAUSE NETWORK2SHAPEWRITER IS NOT WORKING ON MATH CLUSTER

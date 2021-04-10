@@ -1,18 +1,32 @@
-SELECT
-	cal.run_name,
-	cal.area,
-	cal.matsim_main_mode,
-	cal.distance_group_no,
-	cal.distance_group,
-	COALESCE(sim.sim_mode_share_gb_dgroup,0) sim_mode_share_gb_dgroup,
-	cal.mid_mode_share_gb_dgroup/100 mid_mode_share_gb_dgroup,
-	COALESCE(sim.sim_trips_abs_scaled_100,0) sim_trips_abs_scaled_100,
-	cal.mid_trips_abs,
-	cal.mid_trips_abs_rebased
-FROM cal.mid_trip_stats_by_mode_distance_stuttgart_rebased cal
-LEFT JOIN matsim_output.sim_trip_stats_by_mode_distance sim
-ON sim.run_name = cal.run_name
-AND sim.area = cal.area
-AND sim.matsim_main_mode = cal.matsim_main_mode
-AND sim.distance_group_no = cal.distance_group_no
-ORDER BY cal.run_name, cal.area, cal.distance_group_no, cal.matsim_main_mode
+-- cmp.cmp_trip_stats_by_distance_stuttgart
+
+-- Compare simulation trip stats by distance group to mid values
+
+-- @author dwedekind
+
+SELECT CAL.RUN_NAME
+	,CAL.AREA
+	,CAL.MATSIM_MAIN_MODE
+	,CAL.DISTANCE_GROUP_NO
+	,CAL.DISTANCE_GROUP
+	
+	-- The left join to MID_TRIP_STATS_BY_MODE_DISTANCE_STUTTGART_REBASED produces some nan values
+	-- when the mid value for a certain group is specified (also 0) but no trips existing in the simulation for this group
+	-- Fill up with 0 for nicer visualization options
+	,COALESCE(SIM.SIM_MODE_SHARE_GB_DGROUP,0) SIM_MODE_SHARE_GB_DGROUP
+	,CAL.MID_MODE_SHARE_GB_DGROUP / 100 MID_MODE_SHARE_GB_DGROUP
+	,COALESCE(SIM.SIM_TRIPS_ABS_SCALED_100,0) SIM_TRIPS_ABS_SCALED_100
+	
+	,CAL.MID_TRIPS_ABS
+	,CAL.MID_TRIPS_ABS_REBASED
+	
+FROM CAL.MID_TRIP_STATS_BY_MODE_DISTANCE_STUTTGART_REBASED CAL
+LEFT JOIN MATSIM_OUTPUT.SIM_TRIP_STATS_BY_MODE_DISTANCE SIM ON SIM.RUN_NAME = CAL.RUN_NAME
+AND SIM.AREA = CAL.AREA
+AND SIM.MATSIM_MAIN_MODE = CAL.MATSIM_MAIN_MODE
+AND SIM.DISTANCE_GROUP_NO = CAL.DISTANCE_GROUP_NO
+
+ORDER BY CAL.RUN_NAME
+	,CAL.AREA
+	,CAL.DISTANCE_GROUP_NO
+	,CAL.MATSIM_MAIN_MODE

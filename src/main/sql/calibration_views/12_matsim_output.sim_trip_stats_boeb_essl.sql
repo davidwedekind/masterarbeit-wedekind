@@ -1,9 +1,21 @@
-SELECT
-	run_name,
-	matsim_cal_main_mode matsim_main_mode,
-	COUNT(trip_id) as sim_trips_abs,
-	COUNT(trip_id)*{**sfactor**} sim_trips_abs_scaled_100,
-	(COUNT(trip_id) / SUM(COUNT(trip_id)) OVER (partition by run_name)) AS sim_mode_share
-FROM matsim_output.sim_trips_on_boeb_essl_rel
-GROUP BY run_name, matsim_cal_main_mode
-ORDER BY run_name, matsim_cal_main_mode
+-- matsim_output.sim_trip_stats_boeb_essl
+
+-- Aggregate trips on relation by mode for each run
+
+-- @author dwedekind
+
+SELECT RUN_NAME,
+	MATSIM_CAL_MAIN_MODE MATSIM_MAIN_MODE,
+	COUNT(TRIP_ID) AS SIM_TRIPS_ABS,
+	
+	-- **sfactor** is placeholder value for the model scaling factor
+	-- e.g. 10pct-model to bring values to 100pct => sfactor = 10
+	COUNT(TRIP_ID)*{**sfactor**} SIM_TRIPS_ABS_SCALED_100,
+	(COUNT(TRIP_ID) / SUM(COUNT(TRIP_ID)) OVER (PARTITION BY RUN_NAME)) AS SIM_MODE_SHARE
+	
+FROM MATSIM_OUTPUT.SIM_TRIPS_ON_BOEB_ESSL_REL
+
+GROUP BY RUN_NAME,
+	MATSIM_CAL_MAIN_MODE
+ORDER BY RUN_NAME,
+	MATSIM_CAL_MAIN_MODE

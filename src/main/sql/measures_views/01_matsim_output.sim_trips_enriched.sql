@@ -1,45 +1,163 @@
-SELECT
-	t.*,
-	h.krs_ags agent_home_krs_ags,
-	h.krs_gen agent_home_krs_gen,
-	h.gem_ags agent_home_gem_ags,
-	h.gem_gen agent_home_gem_gen,
-	h.regiostar7,
-	h.calib_group area,
+-- matsim_output.sim_trips_enriched
+
+-- Enrich the trip.csv output with some person attributes,
+-- start and end communities/ counties and distance groups
+-- And person and trip group attributes
+
+-- @author dwedekind
+
+
+-- First, define distance groups for each trip and assign start/ end areas for each trip
+WITH FST AS (
+	SELECT T.*
+		,H.SUBPOP
+		,H.KRS_AGS AGENT_HOME_KRS_AGS
+		,H.KRS_GEN AGENT_HOME_KRS_GEN
+		,H.GEM_AGS AGENT_HOME_GEM_AGS
+		,H.GEM_GEN AGENT_HOME_GEM_GEN
+		,H.REGIOSTAR7
+		,H.CALIB_GROUP AREA
+
+		-- Assign distance group and distance group no to each trip based on euclidean trip distance
+		,CASE
+						WHEN (T.EUCLIDEAN_DISTANCE < 500) THEN 'unter_500m'::text
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 500)
+												AND (T.EUCLIDEAN_DISTANCE < 1000)) THEN '500m_bis_1km'::text
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 1000)
+												AND (T.EUCLIDEAN_DISTANCE < 2000)) THEN '1km_bis_2km'::text
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 2000)
+												AND (T.EUCLIDEAN_DISTANCE < 5000)) THEN '2km_bis_5km'::text
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 5000)
+												AND (T.EUCLIDEAN_DISTANCE < 10000)) THEN '5km_bis_10km'::text
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 10000)
+												AND (T.EUCLIDEAN_DISTANCE < 20000)) THEN '10km_bis_20km'::text
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 20000)
+												AND (T.EUCLIDEAN_DISTANCE < 50000)) THEN '20km_bis_50km'::text
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 50000)
+												AND (T.EUCLIDEAN_DISTANCE < 100000)) THEN '50km_bis_100km'::text
+						ELSE 'ueber_100km'::text
+		END AS DISTANCE_GROUP,
 		CASE
-			WHEN ((t.euclidean_distance >= 0) AND (t.euclidean_distance <= 499)) THEN 'unter_500m'::text
-			WHEN ((t.euclidean_distance >= 500) AND (t.euclidean_distance <= 999)) THEN '500m_bis_1km'::text
-			WHEN ((t.euclidean_distance >= 1000) AND (t.euclidean_distance <= 1999)) THEN '1km_bis_2km'::text
-			WHEN ((t.euclidean_distance >= 2000) AND (t.euclidean_distance <= 4999)) THEN '2km_bis_5km'::text
-			WHEN ((t.euclidean_distance >= 5000) AND (t.euclidean_distance <= 9999)) THEN '5km_bis_10km'::text
-			WHEN ((t.euclidean_distance >= 10000) AND (t.euclidean_distance <= 19999)) THEN '10km_bis_20km'::text
-			WHEN ((t.euclidean_distance >= 20000) AND (t.euclidean_distance <= 49999)) THEN '20km_bis_50km'::text
-			WHEN ((t.euclidean_distance >= 50000) AND (t.euclidean_distance <= 99999)) THEN '50km_bis_100km'::text
-			ELSE 'ueber_100km'::text
-		END AS distance_group,
-		CASE
-			WHEN ((t.euclidean_distance >= 0) AND (t.euclidean_distance <= 499)) THEN 1
-			WHEN ((t.euclidean_distance >= 500) AND (t.euclidean_distance <= 999)) THEN 2
-			WHEN ((t.euclidean_distance >= 1000) AND (t.euclidean_distance <= 1999)) THEN 3
-			WHEN ((t.euclidean_distance >= 2000) AND (t.euclidean_distance <= 4999)) THEN 4
-			WHEN ((t.euclidean_distance >= 5000) AND (t.euclidean_distance <= 9999)) THEN 5
-			WHEN ((t.euclidean_distance >= 10000) AND (t.euclidean_distance <= 19999)) THEN 6
-			WHEN ((t.euclidean_distance >= 20000) AND (t.euclidean_distance <= 49999)) THEN 7
-			WHEN ((t.euclidean_distance >= 50000) AND (t.euclidean_distance <= 99999)) THEN 8
-			ELSE 9
-		END AS distance_group_no,
-	s_krs.ags start_kreis_ags,
-	s_krs.gen start_kreis_gen,
-	e_krs.ags end_kreis_ags,
-	e_krs.gen end_kreis_gen,
-	s_gem.ags start_gem_ags,
-	s_gem.gen start_gem_gen,
-	e_gem.ags end_gem_ags,
-	e_gem.gen end_gem_gen
-FROM (matsim_input.sim_agents_enriched h
-JOIN matsim_output.sim_trips_raw t ON ((h.person_id = t.person)))
-JOIN raw.kreise s_krs ON ST_WITHIN(ST_SetSRID( ST_Point(t.start_x, t.start_y), 25832), s_krs.geometry)
-JOIN raw.kreise e_krs ON ST_WITHIN(ST_SetSRID( ST_Point(t.end_x, t.end_y), 25832), e_krs.geometry)
-JOIN raw.gemeinden s_gem ON ST_WITHIN(ST_SetSRID( ST_Point(t.start_x, t.start_y), 25832), s_gem.geometry)
-JOIN raw.gemeinden e_gem ON ST_WITHIN(ST_SetSRID( ST_Point(t.end_x, t.end_y), 25832), e_gem.geometry)
-WHERE (h.subpop = 'region_stuttgart'::text)
+						WHEN (T.EUCLIDEAN_DISTANCE < 500) THEN 1
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 500)
+												AND (T.EUCLIDEAN_DISTANCE < 1000)) THEN 2
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 1000)
+												AND (T.EUCLIDEAN_DISTANCE < 2000)) THEN 3
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 2000)
+												AND (T.EUCLIDEAN_DISTANCE < 5000)) THEN 4
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 5000)
+												AND (T.EUCLIDEAN_DISTANCE < 10000)) THEN 5
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 10000)
+												AND (T.EUCLIDEAN_DISTANCE < 20000)) THEN 6
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 20000)
+												AND (T.EUCLIDEAN_DISTANCE < 50000)) THEN 7
+						WHEN ((T.EUCLIDEAN_DISTANCE >= 50000)
+												AND (T.EUCLIDEAN_DISTANCE < 100000)) THEN 8
+						ELSE 9
+		END AS DISTANCE_GROUP_NO,
+
+		-- Trip-start/ trip-end counties/ communities
+		S_KRS.AGS START_KREIS_AGS,
+		S_KRS.GEN START_KREIS_GEN,
+		E_KRS.AGS END_KREIS_AGS,
+		E_KRS.GEN END_KREIS_GEN,
+		S_GEM.AGS START_GEM_AGS,
+		S_GEM.GEN START_GEM_GEN,
+		E_GEM.AGS END_GEM_AGS,
+		E_GEM.GEN END_GEM_GEN
+
+	FROM (MATSIM_INPUT.SIM_AGENTS_ENRICHED H JOIN MATSIM_OUTPUT.SIM_TRIPS_RAW T ON ((H.PERSON_ID = T.PERSON)))
+
+	-- Determine trip-start and trip-end county and community via spatial join
+	JOIN RAW.KREISE S_KRS ON ST_WITHIN( ST_SETSRID( ST_POINT(T.START_X, T.START_Y), 25832 ), S_KRS.GEOMETRY )
+	JOIN RAW.KREISE E_KRS ON ST_WITHIN( ST_SETSRID( ST_POINT(T.END_X, T.END_Y), 25832 ), E_KRS.GEOMETRY )
+	JOIN RAW.GEMEINDEN S_GEM ON ST_WITHIN(ST_SETSRID(ST_POINT(T.START_X, T.START_Y), 25832), S_GEM.GEOMETRY)
+	JOIN RAW.GEMEINDEN E_GEM ON ST_WITHIN(ST_SETSRID(ST_POINT(T.END_X, T.END_Y), 25832), E_GEM.GEOMETRY)
+),
+
+
+-- Find agents living in Boeblingen or Esslingen county
+RES_BOEBL_ESSL AS (
+	SELECT PERSON_ID,
+		1 RES_BOEBL_ESSL
+	FROM MATSIM_INPUT.SIM_AGENTS_ENRICHED
+	WHERE KRS_AGS IN ('08115', '08116')
+),
+
+-- Find agents living in focus areas (communities) of Boeblingen and Esslingen county
+-- namely Sindelfingen (Boeb), Boeblingen (Boeb), Leinfelden-Echterdingen (Essl), Filderstadt (Essl)
+RES_FOCUS_AREAS AS (
+	SELECT PERSON_ID,
+		1 RES_FOCUS_AREAS
+	FROM MATSIM_INPUT.SIM_AGENTS_ENRICHED
+	WHERE GEM_AGS IN ('08115003', '08115045', '08116078', '08116077')
+),
+
+-- Find trips starting/ending in Boeblingen or Esslingen county
+SE_BOEBL_ESSL AS(
+	SELECT RUN_NAME,
+		TRIP_ID,
+		1 SE_BOEBL_ESSL
+	FROM FST
+	WHERE START_KREIS_AGS IN ('08115', '08116') OR
+		END_KREIS_AGS IN ('08115', '08116')		
+),
+
+-- Find trips starting/ending in focus areas (communities) of Boeblingen and Esslingen county
+SE_FOCUS_AREAS AS(
+	SELECT RUN_NAME,
+		TRIP_ID,
+		1 SE_FOCUS_AREAS
+	FROM FST
+	WHERE START_GEM_AGS IN ('08115003', '08115045', '08116078', '08116077')
+		OR END_GEM_AGS IN ('08115003', '08115045', '08116078', '08116077')	
+),
+
+-- Find trips on county relation Boebling - Esslingen
+REL_BOEBL_ESSL AS(
+	SELECT RUN_NAME,
+		TRIP_ID,
+		1 REL_BOEBL_ESSL
+	FROM FST
+	WHERE (START_KREIS_AGS = '08115' AND END_KREIS_AGS = '08116')
+		OR (START_KREIS_AGS = '08116' AND END_KREIS_AGS = '08115')
+),
+
+-- Find trips on focus relations
+REL_FOCUS_AREAS AS(
+	SELECT RUN_NAME,
+		TRIP_ID,
+		1 REL_FOCUS_AREAS
+	FROM FST
+	WHERE ((START_KREIS_AGS = '08115' AND END_KREIS_AGS = '08116')
+		OR (START_KREIS_AGS = '08116' AND END_KREIS_AGS = '08115'))
+	AND (START_GEM_AGS IN ('08115003', '08115045', '08116078', '08116077')
+		OR END_GEM_AGS IN ('08115003', '08115045', '08116078', '08116077'))
+)
+
+
+-- Now finally enrich the trips with trip group assignments
+SELECT FST.*,
+	COALESCE(RES_BOEBL_ESSL.RES_BOEBL_ESSL,0) RES_BOEBL_ESSL,
+	COALESCE(RES_FOCUS_AREAS.RES_FOCUS_AREAS,0) RES_FOCUS_AREAS,
+	COALESCE(SE_BOEBL_ESSL.SE_BOEBL_ESSL,0) SE_BOEBL_ESSL,
+	COALESCE(SE_FOCUS_AREAS.SE_FOCUS_AREAS,0) SE_FOCUS_AREAS,
+	COALESCE(REL_BOEBL_ESSL.REL_BOEBL_ESSL,0) REL_BOEBL_ESSL,
+	COALESCE(REL_FOCUS_AREAS.REL_FOCUS_AREAS,0) REL_FOCUS_AREAS
+	
+FROM FST
+LEFT JOIN RES_BOEBL_ESSL
+ON FST.PERSON = RES_BOEBL_ESSL.PERSON_ID
+LEFT JOIN RES_FOCUS_AREAS
+ON FST.PERSON = RES_FOCUS_AREAS.PERSON_ID
+LEFT JOIN SE_BOEBL_ESSL
+ON FST.RUN_NAME = SE_BOEBL_ESSL.RUN_NAME AND FST.TRIP_ID = SE_BOEBL_ESSL.TRIP_ID
+LEFT JOIN SE_FOCUS_AREAS
+ON FST.RUN_NAME = SE_FOCUS_AREAS.RUN_NAME AND FST.TRIP_ID = SE_FOCUS_AREAS.TRIP_ID
+LEFT JOIN REL_BOEBL_ESSL
+ON FST.RUN_NAME = REL_BOEBL_ESSL.RUN_NAME AND FST.TRIP_ID = REL_BOEBL_ESSL.TRIP_ID
+LEFT JOIN REL_FOCUS_AREAS
+ON FST.RUN_NAME = REL_FOCUS_AREAS.RUN_NAME AND FST.TRIP_ID = REL_FOCUS_AREAS.TRIP_ID
+
+
+

@@ -1,47 +1,76 @@
-WITH trip_starts AS (
-	SELECT
-		run_name,
-		start_gem_ags,
-		start_gem_gen,
-		matsim_cal_main_mode,
-		COUNT(trip_id) trips_starting
-	FROM matsim_output.sim_trips_enriched
-	GROUP BY run_name, start_gem_ags, start_gem_gen, matsim_cal_main_mode
-),
+-- basic_analysis.trips_by_start_end_gem
 
-trip_ends AS (
-	SELECT
-		run_name,
-		end_gem_ags,
-		end_gem_gen,
-		matsim_cal_main_mode,
-		COUNT(trip_id) trips_ending
-	FROM matsim_output.sim_trips_enriched
-	GROUP BY run_name, end_gem_ags, end_gem_gen, matsim_cal_main_mode
-),
+-- Calculate the mode share from trip-starting-point/ trip-ending-point perspective
 
-headers AS(
-	SELECT DISTINCT run_name, gem_ags, gem_gen, matsim_cal_main_mode
-	FROM((SELECT run_name, start_gem_ags gem_ags, start_gem_gen gem_gen, matsim_cal_main_mode FROM trip_starts) UNION
-		(SELECT run_name, end_gem_ags gem_ags, end_gem_gen gem_gen, matsim_cal_main_mode FROM trip_ends)
-	) As un
-)
+-- @author dwedekind
 
-SELECT
-	h.run_name,
-	h.gem_ags,
-	h.gem_gen,
-	h.matsim_cal_main_mode,
-	s.trips_starting,
-	(s.trips_starting / SUM(s.trips_starting) OVER (partition by h.run_name, h.gem_ags)) AS mode_share_start,
-	e.trips_ending,
-	(e.trips_ending / SUM(e.trips_ending) OVER (partition by h.run_name, h.gem_ags)) AS mode_share_end
-FROM trip_starts s
-JOIN trip_ends e
-ON s.run_name = e.run_name
-AND s.start_gem_ags = e.end_gem_ags
-AND s.matsim_cal_main_mode = e.matsim_cal_main_mode
-FULL JOIN headers h
-ON s.run_name = h.run_name
-AND s.start_gem_ags = h.gem_ags
-AND s.matsim_cal_main_mode = h.matsim_cal_main_mode
+
+-- How many trips start where?
+WITH TRIP_STARTS AS
+	(SELECT RUN_NAME,
+			START_GEM_AGS,
+			START_GEM_GEN,
+			MATSIM_CAL_MAIN_MODE,
+			COUNT(TRIP_ID) TRIPS_STARTING
+		FROM MATSIM_OUTPUT.SIM_TRIPS_ENRICHED
+		GROUP BY RUN_NAME,
+			START_GEM_AGS,
+			START_GEM_GEN,
+			MATSIM_CAL_MAIN_MODE),
+			
+	-- How many trips end where?	
+	TRIP_ENDS AS
+	(SELECT RUN_NAME,
+			END_GEM_AGS,
+			END_GEM_GEN,
+			MATSIM_CAL_MAIN_MODE,
+			COUNT(TRIP_ID) TRIPS_ENDING
+		FROM MATSIM_OUTPUT.SIM_TRIPS_ENRICHED
+		GROUP BY RUN_NAME,
+			END_GEM_AGS,
+			END_GEM_GEN,
+			MATSIM_CAL_MAIN_MODE),
+			
+	
+	-- Get some header information which was not elegant to preserve during prior grouping
+	HEADERS AS
+	(SELECT DISTINCT RUN_NAME,
+			GEM_AGS,
+			GEM_GEN,
+			MATSIM_CAL_MAIN_MODE
+		FROM((SELECT RUN_NAME,
+			  	START_GEM_AGS GEM_AGS,
+			  	START_GEM_GEN GEM_GEN,
+			  	MATSIM_CAL_MAIN_MODE
+			  FROM TRIP_STARTS)
+			
+			 UNION
+			
+			 (SELECT RUN_NAME,
+				END_GEM_AGS GEM_AGS,
+				END_GEM_GEN GEM_GEN,
+				MATSIM_CAL_MAIN_MODE
+			FROM TRIP_ENDS)) AS UN)
+									
+
+-- Get some header information which was not elegant to preserve during prior grouping
+SELECT H.RUN_NAME,
+	H.GEM_AGS,
+	H.GEM_GEN,
+	H.MATSIM_CAL_MAIN_MODE,
+	S.TRIPS_STARTING,
+	(S.TRIPS_STARTING / SUM(S.TRIPS_STARTING) OVER (PARTITION BY H.RUN_NAME, H.GEM_AGS)) AS MODE_SHARE_START,
+	E.TRIPS_ENDING,
+	(E.TRIPS_ENDING / SUM(E.TRIPS_ENDING) OVER (PARTITION BY H.RUN_NAME, H.GEM_AGS)) AS MODE_SHARE_END
+	
+FROM HEADERS H 
+
+-- Merge trip start information
+FULL JOIN TRIP_STARTS S ON S.RUN_NAME = H.RUN_NAME
+AND S.START_GEM_AGS = H.GEM_AGS
+AND S.MATSIM_CAL_MAIN_MODE = H.MATSIM_CAL_MAIN_MODE
+
+-- Merge trip end information
+LEFT JOIN TRIP_ENDS E ON S.RUN_NAME = E.RUN_NAME
+AND S.START_GEM_AGS = E.END_GEM_AGS
+AND S.MATSIM_CAL_MAIN_MODE = E.MATSIM_CAL_MAIN_MODE
