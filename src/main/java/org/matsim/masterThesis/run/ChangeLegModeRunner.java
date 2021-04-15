@@ -1,18 +1,26 @@
 package org.matsim.masterThesis.run;
 
 
+import com.sun.jdi.connect.Transport;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.population.*;
+import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.Plan;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigWriter;
+import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.population.algorithms.TripsToLegsAlgorithm;
 import org.matsim.masterThesis.prep.CleanPopulationAfterCalibration;
+
 import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
-public class PTComparisonRunner {
+public class ChangeLegModeRunner {
 
 
     public static void main(String[] args) throws URISyntaxException {
@@ -24,12 +32,28 @@ public class PTComparisonRunner {
 
         Config config = ScenarioRunner.prepareConfig( args );
 
-        // Limit subtour mode choice to pt only
-        // Is this a good solution? Or should I rather remove subtour mode choice as replanning strategy
-        // How do I limit that bike can only be used in pt_w_bike_allowed but not as single mode?
+        // Set modes for change mode strategy
+        String[] modes = {TransportMode.walk, TransportMode.bike, TransportMode.car, TransportMode.ride, "pt_w_bike_allowed"};
+        config.changeMode().setModes(modes);
 
-        String[] modes = {TransportMode.pt, "pt_w_bike_allowed"};
-        config.subtourModeChoice().setModes(modes);
+        // Replace subtour mode choice replanning strategy by change mode
+        Collection<StrategyConfigGroup.StrategySettings> settings = config.strategy().getStrategySettings()
+                .stream()
+                .filter(setting -> ! setting.getStrategyName().equals("SubtourModeChoice"))
+                .collect(Collectors.toList());
+
+        StrategyConfigGroup.StrategySettings changeTripModeSetting = new StrategyConfigGroup.StrategySettings();
+        changeTripModeSetting.setStrategyName("ChangeTripMode");
+        changeTripModeSetting.setWeight(0.2);
+
+        settings.add(changeTripModeSetting);
+
+        config.strategy().clearStrategySettings();
+
+        for (var setting: settings){
+            config.strategy().addStrategySettings(setting);
+        }
+
 
         // To remove after testing!!!
         config.controler().setLastIteration(1);
@@ -37,7 +61,7 @@ public class PTComparisonRunner {
         Scenario scenario = ScenarioRunner.prepareScenario( config );
 
         // Reset mode of all existing trips in plans to pt
-        PTComparisonRunner.resetPlans( scenario );
+        ChangeLegModeRunner.resetPlans( scenario );
 
         ScenarioRunner.validateModifications( scenario );
 
