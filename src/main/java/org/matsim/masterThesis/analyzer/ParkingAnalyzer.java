@@ -98,121 +98,131 @@ public class ParkingAnalyzer implements TransitDriverStartsEventHandler, Activit
     public void handleEvent(PersonEntersVehicleEvent event) {
         if (! ptDrivers.contains(event.getPersonId())) {
             if (personId2relevantModeLinkId.get(event.getPersonId()) != null) {
-
-                Link link = scenario.getNetwork().getLinks().get(personId2relevantModeLinkId.get(event.getPersonId()));
-                Parking parking = new Parking(
-                        Id.create(parkings.size(), Parking.class),
-                        event.getVehicleId(),
+                createParkingAndAddAtrributes(
                         event.getPersonId(),
-                        link.getId()
+                        event.getVehicleId(),
+                        event.getTime()
                 );
-                parking.setActivityDuringParking(personId2previousActivity.get(event.getPersonId()));
-
-                double parkingStartTime = 0.;
-                if (personId2lastLeaveVehicleTime.get(event.getPersonId()) != null) {
-                    parkingStartTime = personId2lastLeaveVehicleTime.get(event.getPersonId());
-                }
-
-                parking.setParkingStartTime(parkingStartTime);
-                parking.setParkingEndTime(event.getTime());
-
-                if (parkingCostConfigGroup.getActivityPrefixesToBeExcludedFromParkingCost().stream()
-                        .noneMatch(s -> personId2previousActivity.get(event.getPersonId()).startsWith(s))){
-
-                    parking.setFirstTimeResidentialParking(false);
-                    if (personId2previousActivity.get(event.getPersonId()).startsWith(parkingCostConfigGroup.getActivityPrefixForDailyParkingCosts())) {
-                        // daily residential parking costs
-                        parking.setParkingType(ParkingType.RESIDENTIAL);
-
-
-                        if (! hasAlreadyPaidDailyResidentialParkingCosts.contains(event.getPersonId())){
-                            hasAlreadyPaidDailyResidentialParkingCosts.add(event.getPersonId());
-                            parking.setFirstTimeResidentialParking(true);
-
-                            double residentialParkingFeePerDay = 0.;
-                            if (link.getAttributes().getAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName()) != null) {
-                                residentialParkingFeePerDay = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName());
-                            }
-
-                            if (residentialParkingFeePerDay > 0.) {
-                                residentialParkingFeePerDay = -1. * residentialParkingFeePerDay;
-                            }
-
-                            parking.setParkingFee(residentialParkingFeePerDay);
-                        }
-
-                    } else {
-                        // other parking cost types
-                        parking.setParkingType(ParkingType.OPPORTUNITY);
-
-                        if (personId2lastLeaveVehicleTime.get(event.getPersonId()) != null) {
-                            parkingStartTime = personId2lastLeaveVehicleTime.get(event.getPersonId());
-                        }
-                        int parkingDurationHrs = (int) Math.ceil((event.getTime() - parkingStartTime) / 3600.);
-
-                        double extraHourParkingCosts = 0.;
-                        if (link.getAttributes().getAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName()) != null) {
-                            extraHourParkingCosts = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName());
-                        }
-
-                        double firstHourParkingCosts = 0.;
-                        if (link.getAttributes().getAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName()) != null) {
-                            firstHourParkingCosts = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName());
-                        }
-
-                        double dailyParkingCosts = firstHourParkingCosts + 29 * extraHourParkingCosts;
-                        if (link.getAttributes().getAttribute(parkingCostConfigGroup.getDailyParkingCostLinkAttributeName()) != null) {
-                            dailyParkingCosts = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getDailyParkingCostLinkAttributeName());
-                        }
-
-                        double maxDailyParkingCosts = dailyParkingCosts;
-                        if (link.getAttributes().getAttribute(parkingCostConfigGroup.getMaxDailyParkingCostLinkAttributeName()) != null) {
-                            maxDailyParkingCosts = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getMaxDailyParkingCostLinkAttributeName());
-                        }
-
-                        double maxParkingDurationHrs = 30;
-                        if (link.getAttributes().getAttribute(parkingCostConfigGroup.getMaxParkingDurationAttributeName()) != null) {
-                            maxParkingDurationHrs = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getMaxParkingDurationAttributeName());
-                        }
-
-                        double parkingPenalty = 0.;
-                        if (link.getAttributes().getAttribute(parkingCostConfigGroup.getParkingPenaltyAttributeName()) != null) {
-                            parkingPenalty = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getParkingPenaltyAttributeName());
-                        }
-
-                        double costs = 0.;
-                        if (parkingDurationHrs > 0) {
-                            costs += firstHourParkingCosts;
-                            costs += (parkingDurationHrs - 1) * extraHourParkingCosts;
-                        }
-                        if (costs > dailyParkingCosts) {
-                            costs = dailyParkingCosts;
-                        }
-                        if (costs > maxDailyParkingCosts) {
-                            costs = maxDailyParkingCosts;
-                        }
-
-                        parking.setRuleViolation(false);
-                        if ((parkingDurationHrs > maxParkingDurationHrs)) {
-                            parking.setRuleViolation(true);
-                                if (costs < parkingPenalty){
-                                    costs = parkingPenalty;
-                                }
-                        }
-
-                        if (costs > 0.) {
-                            double amount = -1. * costs;
-                            parking.setParkingFee(amount);
-                            }
-
-                    }
-
-                }
-
-                parkings.add(parking);
 
             }
         }
+
+    }
+
+
+    private void createParkingAndAddAtrributes(Id<Person> personId, Id<Vehicle> vehicleId, double depTime) {
+        Link link = scenario.getNetwork().getLinks().get(personId2relevantModeLinkId.get(personId));
+        Parking parking = new Parking(
+                Id.create(parkings.size(), Parking.class),
+                vehicleId,
+                personId,
+                link.getId()
+        );
+        parking.setActivityDuringParking(personId2previousActivity.get(personId));
+
+        double parkingStartTime = 0.;
+        if (personId2lastLeaveVehicleTime.get(personId) != null) {
+            parkingStartTime = personId2lastLeaveVehicleTime.get(personId);
+        }
+
+        parking.setParkingStartTime(parkingStartTime);
+        parking.setParkingEndTime(depTime);
+
+        if (parkingCostConfigGroup.getActivityPrefixesToBeExcludedFromParkingCost().stream()
+                .noneMatch(s -> personId2previousActivity.get(personId).startsWith(s))){
+
+            parking.setFirstTimeResidentialParking(false);
+            if (personId2previousActivity.get(personId).startsWith(parkingCostConfigGroup.getActivityPrefixForDailyParkingCosts())) {
+                // daily residential parking costs
+                parking.setParkingType(ParkingType.RESIDENTIAL);
+
+
+                if (! hasAlreadyPaidDailyResidentialParkingCosts.contains(personId)){
+                    hasAlreadyPaidDailyResidentialParkingCosts.add(personId);
+                    parking.setFirstTimeResidentialParking(true);
+
+                    double residentialParkingFeePerDay = 0.;
+                    if (link.getAttributes().getAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName()) != null) {
+                        residentialParkingFeePerDay = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName());
+                    }
+
+                    if (residentialParkingFeePerDay > 0.) {
+                        residentialParkingFeePerDay = -1. * residentialParkingFeePerDay;
+                    }
+
+                    parking.setParkingFee(residentialParkingFeePerDay);
+                }
+
+            } else {
+                // other parking cost types
+                parking.setParkingType(ParkingType.OPPORTUNITY);
+
+                if (personId2lastLeaveVehicleTime.get(personId) != null) {
+                    parkingStartTime = personId2lastLeaveVehicleTime.get(personId);
+                }
+                int parkingDurationHrs = (int) Math.ceil((depTime - parkingStartTime) / 3600.);
+
+                double extraHourParkingCosts = 0.;
+                if (link.getAttributes().getAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName()) != null) {
+                    extraHourParkingCosts = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName());
+                }
+
+                double firstHourParkingCosts = 0.;
+                if (link.getAttributes().getAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName()) != null) {
+                    firstHourParkingCosts = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName());
+                }
+
+                double dailyParkingCosts = firstHourParkingCosts + 29 * extraHourParkingCosts;
+                if (link.getAttributes().getAttribute(parkingCostConfigGroup.getDailyParkingCostLinkAttributeName()) != null) {
+                    dailyParkingCosts = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getDailyParkingCostLinkAttributeName());
+                }
+
+                double maxDailyParkingCosts = dailyParkingCosts;
+                if (link.getAttributes().getAttribute(parkingCostConfigGroup.getMaxDailyParkingCostLinkAttributeName()) != null) {
+                    maxDailyParkingCosts = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getMaxDailyParkingCostLinkAttributeName());
+                }
+
+                double maxParkingDurationHrs = 30;
+                if (link.getAttributes().getAttribute(parkingCostConfigGroup.getMaxParkingDurationAttributeName()) != null) {
+                    maxParkingDurationHrs = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getMaxParkingDurationAttributeName());
+                }
+
+                double parkingPenalty = 0.;
+                if (link.getAttributes().getAttribute(parkingCostConfigGroup.getParkingPenaltyAttributeName()) != null) {
+                    parkingPenalty = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getParkingPenaltyAttributeName());
+                }
+
+                double costs = 0.;
+                if (parkingDurationHrs > 0) {
+                    costs += firstHourParkingCosts;
+                    costs += (parkingDurationHrs - 1) * extraHourParkingCosts;
+                }
+                if (costs > dailyParkingCosts) {
+                    costs = dailyParkingCosts;
+                }
+                if (costs > maxDailyParkingCosts) {
+                    costs = maxDailyParkingCosts;
+                }
+
+                parking.setRuleViolation(false);
+                if ((parkingDurationHrs > maxParkingDurationHrs)) {
+                    parking.setRuleViolation(true);
+                    if (costs < parkingPenalty){
+                        costs = parkingPenalty;
+                    }
+                }
+
+                if (costs > 0.) {
+                    double amount = -1. * costs;
+                    parking.setParkingFee(amount);
+                }
+
+            }
+
+        }
+
+        parkings.add(parking);
+        personId2lastLeaveVehicleTime.remove(personId);
 
     }
 
@@ -227,6 +237,12 @@ public class ParkingAnalyzer implements TransitDriverStartsEventHandler, Activit
 
     public void printResults(String path) {
         String fileName = path + "parkings.csv.gz";
+
+        // Here, actually last parking procedure of each person would have to be closed and added to list
+        // This is a bit an issue because when does last parking end? At midnight/ at simulation end time?
+        // Currently, last parkings also do not have any cost effect to scoring (as the handler neglects them)
+        // Hence, don't count last parkings in the analysis
+
 
         try {
 
@@ -266,6 +282,8 @@ public class ParkingAnalyzer implements TransitDriverStartsEventHandler, Activit
         return oneLine;
 
     }
+
+
 
 
 

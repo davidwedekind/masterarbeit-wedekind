@@ -42,7 +42,6 @@ def import_run_data(ctx, parent_dir, db_parameter, str_filter):
 
     """
 
-
     logging.info('Search for folders in: ' + parent_dir)
     if str_filter is not None:
         logging.info('Filter - Folders start with string: ' + str_filter)
@@ -56,7 +55,6 @@ def import_run_data(ctx, parent_dir, db_parameter, str_filter):
 
     # -- DATA IMPORTS --
     logging.info('The following run(s) will be imported: ' + '[' + ", ".join(dir_contents) + ']')
-
 
     for run_dir in dir_contents:
         import_run(parent_dir + "/output-" + run_dir, db_parameter)
@@ -205,7 +203,6 @@ def import_legs(legs, db_parameter, run_name):
         'source_download_date': 'Nan',
     }
 
-    gdf_legs.to_csv("C:/Users/david/Desktop/m5_test.csv")
 
     load_df_to_database(
         df=gdf_legs,
