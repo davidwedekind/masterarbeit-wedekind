@@ -1,6 +1,7 @@
 package org.matsim.masterThesis.analyzer;
 
 
+import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.inject.Module;
 import org.matsim.api.core.v01.Scenario;
@@ -18,6 +19,9 @@ import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioByInstanceModule;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
+import org.matsim.extensions.pt.replanning.singleTripStrategies.ChangeSingleTripModeAndRoute;
+import org.matsim.extensions.pt.replanning.singleTripStrategies.RandomSingleTripReRoute;
+import org.matsim.extensions.pt.routing.EnhancedRaptorIntermodalAccessEgress;
 import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesModule;
 import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.facilities.Facility;
@@ -49,8 +53,20 @@ public class PTComparisonAnalyzer {
         };
 
         module = AbstractModule.override(Collections.singletonList(module), new SwissRailRaptorModule());
-/*        module = AbstractModule.override(Collections.singletonList(module), new IntermodalTripFareCompensatorsModule());
-        module = AbstractModule.override(Collections.singletonList(module), new PtIntermodalRoutingModesModule());*/
+
+        module = AbstractModule.override(Collections.singletonList(module), new AbstractModule() {
+            @Override
+            public void install() {
+                addPlanStrategyBinding("RandomSingleTripReRoute").toProvider(RandomSingleTripReRoute.class);
+                addPlanStrategyBinding("ChangeSingleTripModeAndRoute").toProvider(ChangeSingleTripModeAndRoute.class);
+
+                bind(RaptorIntermodalAccessEgress.class).to(EnhancedRaptorIntermodalAccessEgress.class);
+            }
+        });
+
+        module = AbstractModule.override(Collections.singletonList(module), new IntermodalTripFareCompensatorsModule());
+        module = AbstractModule.override(Collections.singletonList(module), new PtIntermodalRoutingModesModule());
+
 
         com.google.inject.Injector injector = org.matsim.core.controler.Injector.createInjector(config, module);
         TripRouter tripRouter = injector.getInstance(TripRouter.class);
