@@ -64,8 +64,12 @@ public class PTComparisonAnalyzer {
             }
         });
 
-        module = AbstractModule.override(Collections.singletonList(module), new IntermodalTripFareCompensatorsModule());
-        module = AbstractModule.override(Collections.singletonList(module), new PtIntermodalRoutingModesModule());
+
+        // I don't know how to configure these two modules in the context of this analyzer (without controler)...
+        // ToDo: Find out how this could work...
+        
+        // module = AbstractModule.override(Collections.singletonList(module), new IntermodalTripFareCompensatorsModule());
+        // module = AbstractModule.override(Collections.singletonList(module), new PtIntermodalRoutingModesModule());
 
 
         com.google.inject.Injector injector = org.matsim.core.controler.Injector.createInjector(config, module);
