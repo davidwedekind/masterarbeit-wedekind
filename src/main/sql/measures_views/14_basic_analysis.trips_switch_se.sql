@@ -63,7 +63,7 @@ M_GROUPS AS (
 -- Build final table
 -- Scale trips to 100 pct via scaling factor
 SELECT RUN_NAME,
-	RES_GROUP,
+	SE_GROUP,
 	FROM_BC_MODE,
 	TO_M_MODE,
 	SWITCHES_ABS*{**sfactor**} SWITCHES_ABS,
