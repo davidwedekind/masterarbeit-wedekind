@@ -61,13 +61,16 @@ public class PTComparisonAnalyzer {
                 addPlanStrategyBinding("ChangeSingleTripModeAndRoute").toProvider(ChangeSingleTripModeAndRoute.class);
 
                 bind(RaptorIntermodalAccessEgress.class).to(EnhancedRaptorIntermodalAccessEgress.class);
+
+/*                install(new IntermodalTripFareCompensatorsModule());
+                install(new PtIntermodalRoutingModesModule());*/
             }
         });
 
 
         // I don't know how to configure these two modules in the context of this analyzer (without controler)...
         // ToDo: Find out how this could work...
-        
+
         // module = AbstractModule.override(Collections.singletonList(module), new IntermodalTripFareCompensatorsModule());
         // module = AbstractModule.override(Collections.singletonList(module), new PtIntermodalRoutingModesModule());
 

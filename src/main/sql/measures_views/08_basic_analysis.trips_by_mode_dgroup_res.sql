@@ -2,8 +2,8 @@
 
 -- Compare trip stats for each area of agent residency per run and mode
 -- Trip stats are number of trips, mode share, average trip distance and average trip duration
--- Areas are LH Stuttgart, Region Stuttgart, Agents of Boeblingen and Esslingen county
--- and Agents of focus areas in Boeblingen and Esslingen county
+-- Resident groups are LH Stuttgart, Region Stuttgart, residents of Boeblingen and Esslingen county
+-- and residents of focus areas in Boeblingen and Esslingen county
 
 -- @author dwedekind
 
@@ -150,17 +150,18 @@ HEADERS AS (
 
 -- Build final table
 -- Calculate diffs and changes
+-- Scale trips to 100 pct via scaling factor
 SELECT
 	H.RUN_NAME,
 	H.RES_GROUP,
 	H.DISTANCE_GROUP,
 	H.DISTANCE_GROUP_NO,
 	H.MATSIM_CAL_MAIN_MODE "mode",
-	COALESCE(BC.TRIPS, 0) TRIPS_BC,
+	COALESCE(BC.TRIPS, 0)*{**sfactor**} TRIPS_BC,
 	COALESCE(BC.MODE_SHARE, 0) MODE_SHARE_BC,
-	COALESCE(M.TRIPS, 0) TRIPS_M,
+	COALESCE(M.TRIPS, 0)*{**sfactor**} TRIPS_M,
 	COALESCE(M.MODE_SHARE, 0) MODE_SHARE_M,
-	(COALESCE(M.TRIPS, 0) - COALESCE(BC.TRIPS, 0)) TRIPS_DIFF,
+	(COALESCE(M.TRIPS, 0) - COALESCE(BC.TRIPS, 0))*{**sfactor**} TRIPS_DIFF,
 	(COALESCE(M.TRIPS, 0) - COALESCE(BC.TRIPS, 0))/BC.TRIPS::FLOAT TRIPS_CHANGE,
 	(COALESCE(M.MODE_SHARE,0 ) - COALESCE(BC.MODE_SHARE, 0)) MODE_SHARE_DIFF,
 	COALESCE(BC.AVG_TRIP_DIST, 0) BC_AVG_TRIP_DIST,
