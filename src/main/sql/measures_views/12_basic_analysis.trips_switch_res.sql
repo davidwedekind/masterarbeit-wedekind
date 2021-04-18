@@ -99,6 +99,44 @@ FOCUS_AREAS AS (
 		TO_M_MODE
 ),
 
+-- Aggregate trips for agents living anywhere but having at least one trip on relation Boebl - Essl
+BOEB_ESSL_TRAV AS (
+	SELECT RUN_NAME,
+		CASE 
+			WHEN RES_REL_BOEBL_ESSL = 1 THEN 'Boebl - Essl Reisende'
+			ELSE 'Nicht Boebl - Essl Reisende'
+		END AS RES_GROUP,
+		FROM_BC_MODE,
+		TO_M_MODE,
+		COUNT(TRIP_ID) SWITCHES_ABS,
+		COUNT(TRIP_ID) / SUM(COUNT(TRIP_ID)) OVER (PARTITION BY RUN_NAME) AS SWITCHES_REL
+
+	FROM BASIC_ANALYSIS.TRIPS_SWITCH_LIST
+	GROUP BY RUN_NAME,
+		RES_REL_BOEBL_ESSL,
+		FROM_BC_MODE,
+		TO_M_MODE
+),
+
+-- Aggregate trips for agents living anywhere but having at least one trip on relation between focus areas
+FOCUS_AREA_TRAV AS (
+	SELECT RUN_NAME,
+		CASE 
+	 		WHEN RES_REL_FOCUS_AREAS = 1 THEN 'Fokusrelationen Reisende'
+	 		ELSE 'Nicht Fokusrelationen Reisende'
+	 	END AS RES_GROUP,
+		FROM_BC_MODE,
+		TO_M_MODE,
+		COUNT(TRIP_ID) SWITCHES_ABS,
+		COUNT(TRIP_ID) / SUM(COUNT(TRIP_ID)) OVER (PARTITION BY RUN_NAME) AS SWITCHES_REL
+
+	FROM BASIC_ANALYSIS.TRIPS_SWITCH_LIST
+	GROUP BY RUN_NAME,
+		RES_REL_FOCUS_AREAS,
+		FROM_BC_MODE,
+		TO_M_MODE
+),
+
 
 -- Union measure groups
 M_GROUPS AS (
@@ -112,6 +150,10 @@ M_GROUPS AS (
 		SELECT * FROM BOEB_ESSL
 		UNION
 		SELECT * FROM FOCUS_AREAS
+		UNION
+		SELECT * FROM BOEB_ESSL_TRAV
+		UNION
+		SELECT * FROM FOCUS_AREA_TRAV
 	) AS UN
 
 	ORDER BY RUN_NAME, RES_GROUP
