@@ -49,6 +49,8 @@ public class PTComparisonAnalyzer {
                         this.bind(AnalysisMainModeIdentifier.class).to(StuttgartAnalysisMainModeIdentifier.class);
                     }
                 };
+/*                install(new IntermodalTripFareCompensatorsModule());
+                install(new PtIntermodalRoutingModesModule());*/
             }
         };
 
@@ -61,9 +63,8 @@ public class PTComparisonAnalyzer {
                 addPlanStrategyBinding("ChangeSingleTripModeAndRoute").toProvider(ChangeSingleTripModeAndRoute.class);
 
                 bind(RaptorIntermodalAccessEgress.class).to(EnhancedRaptorIntermodalAccessEgress.class);
-
-/*                install(new IntermodalTripFareCompensatorsModule());
-                install(new PtIntermodalRoutingModesModule());*/
+/*                new IntermodalTripFareCompensatorsModule();
+                new PtIntermodalRoutingModesModule();*/
             }
         });
 
@@ -71,8 +72,8 @@ public class PTComparisonAnalyzer {
         // I don't know how to configure these two modules in the context of this analyzer (without controler)...
         // ToDo: Find out how this could work...
 
-        // module = AbstractModule.override(Collections.singletonList(module), new IntermodalTripFareCompensatorsModule());
-        // module = AbstractModule.override(Collections.singletonList(module), new PtIntermodalRoutingModesModule());
+/*        module = AbstractModule.override(Collections.singletonList(module), new IntermodalTripFareCompensatorsModule());
+        module = AbstractModule.override(Collections.singletonList(module), new PtIntermodalRoutingModesModule());*/
 
 
         com.google.inject.Injector injector = org.matsim.core.controler.Injector.createInjector(config, module);

@@ -1,0 +1,19 @@
+-- pt_analysis.pt_trips_on_s60_links
+
+-- Provide trips which travel on s60 new section
+
+-- @author dwedekind
+
+
+WITH RELEVANT_TRIPS AS(
+	SELECT RUN_NAME,
+		TRIP_ID	
+	FROM MATSIM_OUTPUT.PERSON_2_LINK_LIST_ENRICHED FST
+	WHERE FST."linkId" IN ('trNew0001', 'trNew0002')
+	GROUP BY RUN_NAME, TRIP_ID
+)
+
+SELECT L.* FROM RELEVANT_TRIPS T
+LEFT JOIN MATSIM_OUTPUT.PERSON_2_LINK_LIST_ENRICHED L
+ON T.RUN_NAME = L.RUN_NAME
+AND T.TRIP_ID = L.TRIP_ID
