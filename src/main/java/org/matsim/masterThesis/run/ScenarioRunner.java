@@ -64,9 +64,7 @@ public class ScenarioRunner {
         log.info("START CONFIG PREPARATION (SCENARIO RUNNER)");
 
         // Read all scenario relevant parameters from config input
-        // Include own config group - StuttgartMasterThesisExperimentalConfigGroup
-        Config config = StuttgartMasterThesisRunner.prepareConfig(args, new StuttgartMasterThesisExperimentalConfigGroup());
-
+        Config config = StuttgartMasterThesisRunner.prepareConfig(args);
         // After calibration, ride should be excluded from subtour mode choice
         List<String> modes = new ArrayList<>(Arrays.asList(config.subtourModeChoice().getModes()));
         modes.remove("ride");
@@ -86,8 +84,7 @@ public class ScenarioRunner {
 
         // In addition to the calibration case, master thesis experimental config group is needed
         // for receiving some additional scenario parameters
-        StuttgartMasterThesisExperimentalConfigGroup thesisExpConfigGroup =
-                ConfigUtils.addOrGetModule(config, StuttgartMasterThesisExperimentalConfigGroup.class);
+        StuttgartMasterThesisExperimentalConfigGroup thesisExpConfigGroup = ConfigUtils.addOrGetModule(config, StuttgartMasterThesisExperimentalConfigGroup.class);
 
         Scenario scenario = StuttgartMasterThesisRunner.prepareScenario(config);
 
@@ -203,7 +200,7 @@ public class ScenarioRunner {
         final Config config = scenario.getConfig();
 
         StuttgartMasterThesisExperimentalConfigGroup thesisExpConfigGroup =
-                ConfigUtils.addOrGetModule(config, StuttgartMasterThesisExperimentalConfigGroup.class);
+                (StuttgartMasterThesisExperimentalConfigGroup) config.getModules().get(StuttgartMasterThesisExperimentalConfigGroup.GROUP_NAME);
 
         // Validate transit schedule
         TransitScheduleValidator.ValidationResult resultAfterModifying = TransitScheduleValidator.validateAll(
@@ -224,7 +221,8 @@ public class ScenarioRunner {
         // Bike and Ride
         log.info("BIKE AND RIDE");
         log.info("Bike Teleported Mode Speed [m/s]: " + config.plansCalcRoute().getModeRoutingParams().get(TransportMode.bike).getTeleportedModeSpeed().toString());
-        IntermodalTripFareCompensatorsConfigGroup compensatorsCfg = ConfigUtils.addOrGetModule(config, IntermodalTripFareCompensatorsConfigGroup.GROUP_NAME, IntermodalTripFareCompensatorsConfigGroup.class);
+        IntermodalTripFareCompensatorsConfigGroup compensatorsCfg =
+                (IntermodalTripFareCompensatorsConfigGroup) config.getModules().get(IntermodalTripFareCompensatorsConfigGroup.GROUP_NAME);
 
         OptionalDouble optionalTripCompensation = compensatorsCfg.getIntermodalTripFareCompensatorConfigGroups().stream()
                 .filter(var1 -> var1.getDrtModesAsString().equals(TransportMode.bike))
@@ -243,7 +241,8 @@ public class ScenarioRunner {
         log.info("Fare Zone prices ... ");
 
 
-        PtFaresConfigGroup configFares = ConfigUtils.addOrGetModule(config, PtFaresConfigGroup.GROUP, PtFaresConfigGroup.class);
+        PtFaresConfigGroup configFares =
+                (PtFaresConfigGroup) config.getModules().get(PtFaresConfigGroup.GROUP);
 
         Map<Integer, Double> allFares = configFares.getFaresGroup().getFaresAsMap();
         for (Map.Entry<Integer, Double> fare: allFares.entrySet()){

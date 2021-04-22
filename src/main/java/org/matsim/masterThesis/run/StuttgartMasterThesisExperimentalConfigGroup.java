@@ -6,7 +6,7 @@ import org.matsim.core.config.ReflectiveConfigGroup;
  */
 
 public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConfigGroup {
-    private static final String GROUP_NAME = "stuttgartMasterThesisExperimental";
+    public static final String GROUP_NAME = "stuttgartMasterThesisExperimental";
     private static final String PARKING_ZONE_SHAPE_FILE = "parkingZoneShapeFile";
     private static final String FARE_ZONE_SHAPE_FILE = "fareZoneShapeFile";
     private static final String REDUCED_CAR_INFRASTRUCTURE_ZONES_SHAPE_FILE = "reducedCarInfrastructureZonesShapeFile";
