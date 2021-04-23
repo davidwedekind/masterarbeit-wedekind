@@ -36,7 +36,9 @@ import org.matsim.masterThesis.run.ScenarioRunner;
 import org.matsim.stuttgart.run.StuttgartAnalysisMainModeIdentifier;
 
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -60,16 +62,23 @@ public class PTComparisonAnalyzer {
     }
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws URISyntaxException {
+
 
         Config config = ScenarioRunner.prepareConfig( args );
+        File file = new File(config.getContext().toURI());
+        String outputDir = file.getParentFile().getAbsolutePath();
+
+
+        System.out.println(outputDir);
 
         // Do not perform scenario creation of scenario runner again
         Scenario scenario = ScenarioUtils.loadScenario( config );
 
         PTComparisonAnalyzer analyzer = new PTComparisonAnalyzer( scenario );
         analyzer.calculatePTRouteOptions();
-        analyzer.printResults( config.getContext().toString() );
+        
+        analyzer.printResults( outputDir );
 
     }
 
@@ -155,7 +164,7 @@ public class PTComparisonAnalyzer {
                 routeWithBikeAllowedResult.add(String.valueOf(travelTimeOnRoute2));
 
 
-                boolean isBikeAndRide = route.stream()
+                boolean isBikeAndRide = routeWithBikeAllowed.stream()
                         .filter(pe -> pe instanceof Leg)
                         .map(pe -> (Leg) pe)
                         .anyMatch(leg -> leg.getMode().equals(TransportMode.bike));
@@ -174,7 +183,7 @@ public class PTComparisonAnalyzer {
 
 
     public void printResults(String path){
-        String fileName = path + "ptComparatorResults.csv.gz";
+        String fileName = path + "/ptComparatorResults.csv.gz";
 
         try {
 
