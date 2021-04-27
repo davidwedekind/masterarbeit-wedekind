@@ -101,7 +101,16 @@ public class ScenarioRunner {
         }
 
         if (thesisExpConfigGroup.getS60Extension()){
-            new CreateS60Extension().runExtensionModifications(scenario);
+
+            if (thesisExpConfigGroup.getS60ScheduleAlignment()){
+                // If s60 schedule should be aligned in addition, take extension runner with schedule alignment
+                new CreateS60ExtensionWithScheduleAlignment().runExtensionModifications(scenario);
+
+            } else {
+                // otherwise take "simple" s60 extension runner
+                new CreateS60Extension().runExtensionModifications(scenario);
+
+            }
         }
 
         if (thesisExpConfigGroup.getU6ExtensionShapeFile() != null){
