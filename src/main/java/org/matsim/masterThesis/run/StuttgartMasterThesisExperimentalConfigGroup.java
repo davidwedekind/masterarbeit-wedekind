@@ -14,6 +14,7 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
     private static final String S60_EXTENSION = "s60Extension";
     private static final String SUPERSHUTTLE_EXTENSION = "supershuttleExtension";
     private static final String TAKT_ALIGNMENT = "flughafenConnectionAlignment";
+    private static final String S60_SCHEDULE_ALIGNMENT = "s60ScheduleAlignment";
 
     private String parkingZoneShapeFile = "parkingZones_bc.shp";
     private String fareZoneShapeFile = "fareZones_bc.shp";
@@ -22,6 +23,7 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
     private boolean s60Extension = false;
     private boolean supershuttleExtension = false;
     private boolean taktAlignment = false;
+    private boolean s60ScheduleAlignment = false;
 
 
     public StuttgartMasterThesisExperimentalConfigGroup(){
@@ -120,6 +122,24 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
 
     public void setTaktAlignment(boolean taktAlignment) {
         this.taktAlignment = taktAlignment;
+    }
+
+    @StringGetter(S60_SCHEDULE_ALIGNMENT)
+    public String getS60ScheduleAlignmentAsString() {
+        return String.valueOf(getS60ScheduleAlignment());
+    }
+
+    public boolean getS60ScheduleAlignment() {
+        return s60ScheduleAlignment;
+    }
+
+    @StringSetter(S60_SCHEDULE_ALIGNMENT)
+    public void setS60ScheduleAlignment(String s60ScheduleAlignment) {
+        setTaktAlignment(Boolean.parseBoolean(s60ScheduleAlignment));
+    }
+
+    public void setS60ScheduleAlignment(boolean s60ScheduleAlignment) {
+        this.s60ScheduleAlignment = s60ScheduleAlignment;
     }
 
 }

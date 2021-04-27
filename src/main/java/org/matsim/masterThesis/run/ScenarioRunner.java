@@ -17,10 +17,7 @@ import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.masterThesis.BanCarsFromSmallerStreets;
-import org.matsim.masterThesis.analyzer.Link2PersonListAnalyzer;
-import org.matsim.masterThesis.analyzer.Network2Shape;
-import org.matsim.masterThesis.analyzer.PTRevenueAnalyzer;
-import org.matsim.masterThesis.analyzer.ParkingAnalyzer;
+import org.matsim.masterThesis.analyzer.*;
 import org.matsim.masterThesis.prep.CleanPopulationAfterCalibration;
 import org.matsim.masterThesis.ptModifiers.*;
 import org.matsim.pt.transitSchedule.api.TransitLine;
@@ -302,8 +299,16 @@ public class ScenarioRunner {
         ptRevenueAnalyzer.printResults(outputFile);
         parkingAnalyzer.printResults(outputFile);
 
+        // ToDo: Find out how this works...
         // This does not work on math cluster. Network needs to be handled on local machine.
-        // Network2Shape.exportNetwork2Shp(controler.getScenario(), outputDir, "epsg:25832", TransformationFactory.getCoordinateTransformation("epsg:25832", "epsg:25832"));
+        Network2Shape.exportNetwork2Shp(controler.getScenario(), outputDir, "epsg:25832", TransformationFactory.getCoordinateTransformation("epsg:25832", "epsg:25832"));
+
+
+        // Do always as last - as config parameters are changed within this analyzer
+        PTComparisonAnalyzer comparisonAnalyzer = new PTComparisonAnalyzer(controler.getScenario());
+        comparisonAnalyzer.calculatePTRouteOptions(controler);
+        comparisonAnalyzer.printResults(outputFile);
+
 
         log.info("FINISH POST-PROCESSING");
         log.info("------------");
