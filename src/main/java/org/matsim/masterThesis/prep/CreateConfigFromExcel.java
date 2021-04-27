@@ -253,9 +253,9 @@ public class CreateConfigFromExcel {
         log.info("Tag takt alignment extension: " + taktAlignment);
         thesisExpConfigGroup.setTaktAlignment(taktAlignment);
 
-        final boolean s60ScheduleAlignment = sheet.getRow(ptExtensionStartRow + 2).getCell(columnNumber).getBooleanCellValue();
-        log.info("Tag takt alignment extension: " + s60ScheduleAlignment);
-        thesisExpConfigGroup.setS60ScheduleAlignment(s60ScheduleAlignment);
+        final boolean connectionImprovement = sheet.getRow(ptExtensionStartRow + 2).getCell(columnNumber).getBooleanCellValue();
+        log.info("Tag connection improvement extension: " + connectionImprovement);
+        thesisExpConfigGroup.setConnectionImprovement(connectionImprovement);
 
 
     }

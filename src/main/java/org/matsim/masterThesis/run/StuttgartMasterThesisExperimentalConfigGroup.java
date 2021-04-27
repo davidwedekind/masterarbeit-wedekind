@@ -14,7 +14,7 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
     private static final String S60_EXTENSION = "s60Extension";
     private static final String SUPERSHUTTLE_EXTENSION = "supershuttleExtension";
     private static final String TAKT_ALIGNMENT = "flughafenConnectionAlignment";
-    private static final String S60_SCHEDULE_ALIGNMENT = "s60ScheduleAlignment";
+    private static final String CONNECTION_IMPROVEMENT = "connectionImprovement";
 
     private String parkingZoneShapeFile = "parkingZones_bc.shp";
     private String fareZoneShapeFile = "fareZones_bc.shp";
@@ -23,7 +23,7 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
     private boolean s60Extension = false;
     private boolean supershuttleExtension = false;
     private boolean taktAlignment = false;
-    private boolean s60ScheduleAlignment = false;
+    private boolean connectionImprovement = false;
 
 
     public StuttgartMasterThesisExperimentalConfigGroup(){
@@ -124,22 +124,22 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
         this.taktAlignment = taktAlignment;
     }
 
-    @StringGetter(S60_SCHEDULE_ALIGNMENT)
-    public String getS60ScheduleAlignmentAsString() {
-        return String.valueOf(getS60ScheduleAlignment());
+    @StringGetter(CONNECTION_IMPROVEMENT)
+    public String getConnectionImprovementAsString() {
+        return String.valueOf(getConnectionImprovement());
     }
 
-    public boolean getS60ScheduleAlignment() {
-        return s60ScheduleAlignment;
+    public boolean getConnectionImprovement() {
+        return connectionImprovement;
     }
 
-    @StringSetter(S60_SCHEDULE_ALIGNMENT)
-    public void setS60ScheduleAlignment(String s60ScheduleAlignment) {
-        setTaktAlignment(Boolean.parseBoolean(s60ScheduleAlignment));
+    @StringSetter(CONNECTION_IMPROVEMENT)
+    public void setConnectionImprovement(String connectionImprovement) {
+        setTaktAlignment(Boolean.parseBoolean(connectionImprovement));
     }
 
-    public void setS60ScheduleAlignment(boolean s60ScheduleAlignment) {
-        this.s60ScheduleAlignment = s60ScheduleAlignment;
+    public void setConnectionImprovement(boolean connectionImprovement) {
+        this.connectionImprovement = connectionImprovement;
     }
 
 }

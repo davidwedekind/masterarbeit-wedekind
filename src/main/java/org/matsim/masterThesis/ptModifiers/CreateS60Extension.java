@@ -14,9 +14,14 @@ import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.pt.transitSchedule.api.*;
+import org.matsim.pt.transitSchedule.api.TransitRouteStop;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.matsim.pt.utils.TransitScheduleValidator;
-import java.util.*;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author dwedekind
@@ -31,18 +36,20 @@ public class CreateS60Extension {
         JCommander.newBuilder().addObject(input).build().parse(args);
         log.info("Input network file: " + input.networkFile);
         log.info("Input transit schedule file: " + input.transitSchedule);
-        log.info("Input transit vehicle file: " + input.transitSchedule);
+        log.info("Input transit vehicle file: " + input.transitVehicles);
         log.info("Output file directory: " + input.outputFile);
 
         Config config = ConfigUtils.createConfig();
 
-        Scenario scenario = ScenarioUtils.loadScenario(config);
+
         final String epsgCode = "25832";
 
         config.global().setCoordinateSystem("EPSG:" + epsgCode);
         config.transit().setTransitScheduleFile(input.transitSchedule);
         config.network().setInputFile(input.networkFile);
         config.vehicles().setVehiclesFile(input.transitVehicles);
+
+        Scenario scenario = ScenarioUtils.loadScenario(config);
 
         new CreateS60Extension().runExtensionModifications(scenario);
 
@@ -98,19 +105,19 @@ public class CreateS60Extension {
 
         // Specify transit route stops to add on network routes of S60
         List<TransitRouteStop> transitRouteStopsDirFilderstadt = Arrays.asList(
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001055.6", TransitStopFacility.class)), 240, 420),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005201.1", TransitStopFacility.class)), 540, 540),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8003622.2", TransitStopFacility.class)), 960, 960),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001650.1", TransitStopFacility.class)), 1140, 1140),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005768.1", TransitStopFacility.class)), 1320, 1380),
-               tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001984.1", TransitStopFacility.class)), 1500, 1500));
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001055.6", TransitStopFacility.class)), 120, 360),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005201.1", TransitStopFacility.class)), 420, 420),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8003622.2", TransitStopFacility.class)), 840, 840),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001650.1", TransitStopFacility.class)), 1020, 1020),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005768.1", TransitStopFacility.class)), 1200, 1200),
+               tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001984.1", TransitStopFacility.class)), 1320, 1320));
         List<TransitRouteStop> transitRouteStopsDirBoeblingen = Arrays.asList(
                 tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001984", TransitStopFacility.class)), 0, 0),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005768", TransitStopFacility.class)), 120, 180),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001650", TransitStopFacility.class)), 360, 360),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8003622", TransitStopFacility.class)), 540, 540),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005201.2", TransitStopFacility.class)), 960, 960),
-                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001055.4", TransitStopFacility.class)), 1080, 1260));
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005768", TransitStopFacility.class)), 120, 120),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001650", TransitStopFacility.class)), 300, 300),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8003622", TransitStopFacility.class)), 480, 480),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8005201.2", TransitStopFacility.class)), 900, 900),
+                tS.getFactory().createTransitRouteStop(tS.getFacilities().get(Id.create("8001055.4", TransitStopFacility.class)), 960, 1200));
 
 
         // Extend S60

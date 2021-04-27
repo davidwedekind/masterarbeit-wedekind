@@ -12,7 +12,6 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.utils.misc.OptionalTime;
 import org.matsim.pt.transitSchedule.api.*;
-import playground.vsp.andreas.utils.pt.TransitScheduleCleaner;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -196,8 +195,7 @@ public class PtUtils {
 
     private List<TransitRouteStop> extendRouteStopList(List<TransitRouteStop> transitRouteStopsPt1, List<TransitRouteStop> transitRouteStopsPt2){
         List<TransitRouteStop> newRouteStopSequence = new ArrayList<>(transitRouteStopsPt1);
-        final double offSet = transitRouteStopsPt1.get(transitRouteStopsPt1.size() - 1).getDepartureOffset().seconds()
-                + transitRouteStopsPt2.get(0).getArrivalOffset().seconds();
+        final double offSet = transitRouteStopsPt1.get(transitRouteStopsPt1.size() - 1).getDepartureOffset().seconds();
         
 
         List<TransitRouteStop> adjRouteStopsPt2 = transitRouteStopsPt2.stream()

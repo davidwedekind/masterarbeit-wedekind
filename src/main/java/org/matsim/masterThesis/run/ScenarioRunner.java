@@ -2,9 +2,11 @@ package org.matsim.masterThesis.run;
 
 import graphql.AssertException;
 import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
@@ -101,16 +103,8 @@ public class ScenarioRunner {
         }
 
         if (thesisExpConfigGroup.getS60Extension()){
+            new CreateS60Extension().runExtensionModifications(scenario);
 
-            if (thesisExpConfigGroup.getS60ScheduleAlignment()){
-                // If s60 schedule should be aligned in addition, take extension runner with schedule alignment
-                new CreateS60ExtensionWithScheduleAlignment().runExtensionModifications(scenario);
-
-            } else {
-                // otherwise take "simple" s60 extension runner
-                new CreateS60Extension().runExtensionModifications(scenario);
-
-            }
         }
 
         if (thesisExpConfigGroup.getU6ExtensionShapeFile() != null){
@@ -127,6 +121,18 @@ public class ScenarioRunner {
             alignTakts(scenario);
         }
 
+        if (thesisExpConfigGroup.getConnectionImprovement()) {
+            // Move bus stops towards s-bahn stations for minimal walk times
+            moveStopTowardsOtherStop(scenario, "561562", "8001650");
+            moveStopTowardsOtherStop(scenario, "561573", "8003622");
+            moveStopTowardsOtherStop(scenario, "562223", "8001984");
+            moveStopTowardsOtherStop(scenario, "421958", "8001055");
+            moveStopTowardsOtherStop(scenario, "561333", "8005574");
+
+        }
+
+
+
 
         // Finally include fare Zones and parking shapes according to the scenario
         // and finish the scenario
@@ -139,6 +145,22 @@ public class ScenarioRunner {
         log.info("FINISH SCENARIO PREPARATION (SCENARIO RUNNER)");
         log.info("------------");
         return scenario;
+    }
+
+    private static void moveStopTowardsOtherStop(Scenario scenario, String stopGroup1, String stopGroup2) {
+        String node1 = "tr" + stopGroup1;
+        String node2 = "tr" + stopGroup2;
+
+        Coord targetCoord = scenario.getNetwork().getNodes().get(Id.createNodeId(node2)).getCoord();
+
+        // First move network node
+        scenario.getNetwork().getNodes().get(Id.createNodeId(node1)).setCoord(targetCoord);
+
+        // Then move pt facilities
+        scenario.getTransitSchedule().getFacilities().values().stream()
+                .filter(transitStopFacility -> transitStopFacility.getId().toString().startsWith(stopGroup1))
+                .forEach(transitStopFacility -> transitStopFacility.setCoord(targetCoord));
+
     }
 
 
@@ -195,6 +217,7 @@ public class ScenarioRunner {
 
         modifier.doubleTakt(line38route3, newTakt, start, end);
         modifier.doubleTakt(line38route4, newTakt, start, end);
+
 
     }
 
