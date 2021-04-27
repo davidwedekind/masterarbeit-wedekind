@@ -22,7 +22,7 @@ public class ScenarioRunnerTest {
 
 
 
-        final int lastIteration = 10;
+        final int lastIteration = 2;
 
         String[] args = new String[]{ configPath };
         Config config = ScenarioRunner.prepareConfig( args );
