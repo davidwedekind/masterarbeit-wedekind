@@ -3,7 +3,6 @@ package org.matsim.masterThesis.analyzer;
 
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
-import com.google.inject.Module;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.log4j.Logger;
@@ -13,7 +12,6 @@ import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.ControlerDefaultsModule;
@@ -33,6 +31,7 @@ import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesM
 import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.facilities.Facility;
 import org.matsim.masterThesis.run.ScenarioRunner;
+import org.matsim.pt.routes.TransitPassengerRoute;
 import org.matsim.stuttgart.run.StuttgartAnalysisMainModeIdentifier;
 
 
@@ -47,7 +46,7 @@ public class PTComparisonAnalyzer {
     private static final Logger log = Logger.getLogger(PTComparisonAnalyzer.class);
 
     private final String separator;
-    private final String[] HEADER = {"person_id", "trip_id", "routing_mode", "start_time", "end_time", "trav_time", "isBikeAndRide", "containsS60"};
+    private final String[] HEADER = {"person_id", "trip_id", "routing_mode", "start_time", "end_time", "trav_time", "containsS60", "time_on_s60", "is_bike_and_ride", "is_walk", "route_description"};
 
     private final Config config;
     private final Scenario scenario;
@@ -78,7 +77,7 @@ public class PTComparisonAnalyzer {
         PTComparisonAnalyzer analyzer = new PTComparisonAnalyzer( scenario );
         analyzer.calculatePTRouteOptions();
         
-        analyzer.printResults( outputDir );
+        analyzer.printResults( outputDir + "/");
 
     }
 
@@ -86,17 +85,36 @@ public class PTComparisonAnalyzer {
     public void calculatePTRouteOptions(Controler controler){
         // Calculator version which can be used as postprocessor after controler.run() has been executed
         // controler.run() does the module installation and injector creation by itself
-        controler.getConfig().controler().setOutputDirectory(controler.getConfig().controler().getOutputDirectory() + "/ptComparator");
+
+
+        // Reset config file settings of output directory, plans, network, schedule etc...
+        String outputDirectory = controler.getConfig().controler().getOutputDirectory();
+        controler.getConfig().controler().setOutputDirectory(outputDirectory + "/ptComparatorDump");
+
+        controler.getConfig().plans().setInputFile(getOutputPathLogic(controler, "plans.xml.gz"));
+        controler.getConfig().network().setInputFile(getOutputPathLogic(controler, "network.xml.gz"));
+        controler.getConfig().transit().setTransitScheduleFile(getOutputPathLogic(controler, "transitSchedule.xml.gz"));
+        controler.getConfig().transit().setVehiclesFile(getOutputPathLogic(controler, "transitVehicles.xml.gz"));
+        controler.getConfig().vehicles().setVehiclesFile(getOutputPathLogic(controler, "vehicles.xml.gz"));
+
         com.google.inject.Injector injector = controler.getInjector();
         calculatePTRouteOptions(injector);
 
     }
 
 
+    private String getOutputPathLogic(Controler controler, String fileTypeSpecificNaming){
+        String outputDirectory = controler.getConfig().controler().getOutputDirectory();
+        String runId = controler.getConfig().controler().getRunId();
+
+        return outputDirectory + "/" + runId + ".output_" + fileTypeSpecificNaming;
+    }
+
+
     public void calculatePTRouteOptions(){
         // Calculator version which can be executed right away but does installing of modules itself
         // For single usage not after controler.run() has been executed
-        config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "/ptComparator");
+        config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "/ptComparatorDump");
         calculatePTRouteOptions(installModulesManually());
 
     }
@@ -116,63 +134,29 @@ public class PTComparisonAnalyzer {
                 Facility fromFacility = FacilitiesUtils.wrapActivity(trip.getOriginActivity());
                 Facility toFacility = FacilitiesUtils.wrapActivity(trip.getDestinationActivity());
 
-
                 // Determine regular pt route with parameters
-                List<String> routeResult = new ArrayList<>();
                 var route = tripRouter.calcRoute(TransportMode.pt, fromFacility, toFacility, trip.getOriginActivity().getEndTime().seconds(), person);
 
-                String person_id = person.getId().toString();
-                routeResult.add(person_id);
+                List<String> routeRecords = processRouteInformation(
+                        person.getId().toString(),
+                        person.getId().toString() + "_" + tripCount,
+                        TransportMode.pt,
+                        route
+                );
 
-                String trip_id = person_id + "_" + tripCount;
-                routeResult.add(trip_id);
-
-                routeResult.add(TransportMode.pt);
-
-                Leg firstLegOnRoute1 = (Leg) route.get(0);
-                Leg lastLegOnRoute1 = (Leg) route.get(route.size() - 1);
-                Double startTimeOnRoute1 = firstLegOnRoute1.getDepartureTime().seconds();
-                Double endTimeOnRoute1 = lastLegOnRoute1.getDepartureTime().seconds() + lastLegOnRoute1.getTravelTime().seconds();
-                Double travelTimeOnRoute1 = endTimeOnRoute1 - startTimeOnRoute1;
-                routeResult.add(String.valueOf(startTimeOnRoute1));
-                routeResult.add(String.valueOf(endTimeOnRoute1));
-                routeResult.add(String.valueOf(travelTimeOnRoute1));
-
-                routeResult.add(String.valueOf(false));
-                routeResult.add(String.valueOf(false));
-
-                results.add(routeResult);
-
+                results.add(routeRecords);
 
                 // Determine route and parameters for pt with the option of using bike on access and egress
-                List<String> routeWithBikeAllowedResult = new ArrayList<>();
                 var routeWithBikeAllowed = tripRouter.calcRoute("pt_w_bike_allowed", fromFacility, toFacility, trip.getOriginActivity().getEndTime().seconds(), person);
 
-                routeWithBikeAllowedResult.add(person_id);
+                List<String> routeWithBikeAllowedRecords = processRouteInformation(
+                        person.getId().toString(),
+                        person.getId().toString() + "_" + tripCount,
+                        "pt_w_bike_allowed",
+                        routeWithBikeAllowed
+                );
 
-                routeWithBikeAllowedResult.add(trip_id);
-
-                routeWithBikeAllowedResult.add("pt_w_bike_allowed");
-
-                Leg firstLegOnRoute2 = (Leg) routeWithBikeAllowed.get(0);
-                Leg lastLegOnRoute2 = (Leg) routeWithBikeAllowed.get(routeWithBikeAllowed.size() - 1);
-                Double startTimeOnRoute2 = firstLegOnRoute2.getDepartureTime().seconds();
-                Double endTimeOnRoute2 = lastLegOnRoute2.getDepartureTime().seconds() + firstLegOnRoute2.getTravelTime().seconds();
-                Double travelTimeOnRoute2 = endTimeOnRoute2 - startTimeOnRoute2;
-                routeWithBikeAllowedResult.add(String.valueOf(startTimeOnRoute2));
-                routeWithBikeAllowedResult.add(String.valueOf(endTimeOnRoute2));
-                routeWithBikeAllowedResult.add(String.valueOf(travelTimeOnRoute2));
-
-
-                boolean isBikeAndRide = routeWithBikeAllowed.stream()
-                        .filter(pe -> pe instanceof Leg)
-                        .map(pe -> (Leg) pe)
-                        .anyMatch(leg -> leg.getMode().equals(TransportMode.bike));
-
-                routeWithBikeAllowedResult.add(String.valueOf(isBikeAndRide));
-                routeWithBikeAllowedResult.add(String.valueOf(false));
-
-                results.add(routeWithBikeAllowedResult);
+                results.add(routeWithBikeAllowedRecords);
 
                 tripCount ++;
             }
@@ -182,8 +166,79 @@ public class PTComparisonAnalyzer {
     }
 
 
+    public List<String> processRouteInformation(String personId, String tripId, String routingMode, List<? extends PlanElement> route){
+        List<String> relevantRecords = new ArrayList<>();
+
+        relevantRecords.add(personId);
+        relevantRecords.add(tripId);
+        relevantRecords.add(routingMode);
+
+        Leg firstLeg = (Leg) route.get(0);
+        Double tripStartTime = firstLeg.getDepartureTime().seconds();
+
+        Leg lastLeg = (Leg) route.get(route.size() - 1);
+        Double tripEndTime = firstLeg.getDepartureTime().seconds() + lastLeg.getTravelTime().seconds();
+
+        Double tripTravelTime = tripEndTime - tripStartTime;
+
+        relevantRecords.add(String.valueOf(tripStartTime));
+        relevantRecords.add(String.valueOf(tripEndTime));
+        relevantRecords.add(String.valueOf(tripTravelTime));
+
+        String s60LineId = "S60 - 1";
+        boolean containsS60 = route.stream()
+                .filter(pe -> pe instanceof Leg)
+                .map(pe -> (Leg) pe)
+                .filter(leg -> leg.getRoute() instanceof TransitPassengerRoute)
+                .map(leg -> (TransitPassengerRoute) leg.getRoute())
+                .anyMatch(ptRoute -> ptRoute.getLineId().toString().equals(s60LineId));
+
+        double timeOnS60 = 0.;
+        if (containsS60){
+            timeOnS60 = route.stream()
+                    .filter(pe -> pe instanceof Leg)
+                    .map(pe -> (Leg) pe)
+                    .filter(leg -> leg.getRoute() instanceof TransitPassengerRoute)
+                    .map(leg -> (TransitPassengerRoute) leg.getRoute())
+                    .filter(ptRoute -> ptRoute.getLineId().toString().equals(s60LineId))
+                    .mapToDouble(ptRoute -> ptRoute.getTravelTime().seconds())
+                    .sum();
+        }
+
+        relevantRecords.add(String.valueOf(containsS60));
+        relevantRecords.add(String.valueOf(timeOnS60));
+
+        boolean isBikeAndRide = route.stream()
+                .filter(pe -> pe instanceof Leg)
+                .map(pe -> (Leg) pe)
+                .anyMatch(leg -> leg.getMode().equals(TransportMode.bike));
+
+        relevantRecords.add(String.valueOf(isBikeAndRide));
+
+        boolean hasWalk = route.stream()
+                .filter(pe -> pe instanceof Leg)
+                .map(pe -> (Leg) pe)
+                .anyMatch(leg -> leg.getMode().equals(TransportMode.walk));
+
+        boolean hasOtherThanWalk = route.stream()
+                .filter(pe -> pe instanceof Leg)
+                .map(pe -> (Leg) pe)
+                .anyMatch(leg -> ! leg.getMode().equals(TransportMode.walk));
+
+        boolean isWalk = ((hasWalk) && (! hasOtherThanWalk));
+
+        relevantRecords.add(String.valueOf(isWalk));
+
+        String routeDescription = route.toString();
+
+        relevantRecords.add(String.valueOf(routeDescription));
+
+        return relevantRecords;
+    }
+
+
     public void printResults(String path){
-        String fileName = path + "/ptComparatorResults.csv.gz";
+        String fileName = path + "ptComparatorResults.csv.gz";
 
         try {
 
