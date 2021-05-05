@@ -13,7 +13,7 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
     private static final String U6_EXTENSION_SHAPEFILE = "u6ExtensionShapeFile";
     private static final String S60_EXTENSION = "s60Extension";
     private static final String SUPERSHUTTLE_EXTENSION = "supershuttleExtension";
-    private static final String TAKT_ALIGNMENT = "flughafenConnectionAlignment";
+    private static final String TAKT_ALIGNMENT = "taktAlignment";
     private static final String CONNECTION_IMPROVEMENT = "connectionImprovement";
 
     private String parkingZoneShapeFile = "parkingZones_bc.shp";
@@ -135,7 +135,7 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
 
     @StringSetter(CONNECTION_IMPROVEMENT)
     public void setConnectionImprovement(String connectionImprovement) {
-        setTaktAlignment(Boolean.parseBoolean(connectionImprovement));
+        setConnectionImprovement(Boolean.parseBoolean(connectionImprovement));
     }
 
     public void setConnectionImprovement(boolean connectionImprovement) {

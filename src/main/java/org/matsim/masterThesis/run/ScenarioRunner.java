@@ -122,11 +122,14 @@ public class ScenarioRunner {
         }
 
         if (thesisExpConfigGroup.getConnectionImprovement()) {
+            log.info("Move bus stops towards sbahn stations");
+
             // Move bus stops towards s-bahn stations for minimal walk times
             moveStopTowardsOtherStop(scenario, "561562", "8001650");
             moveStopTowardsOtherStop(scenario, "561573", "8003622");
             moveStopTowardsOtherStop(scenario, "562223", "8001984");
             moveStopTowardsOtherStop(scenario, "421958", "8001055");
+            moveStopTowardsOtherStop(scenario, "555742", "8001055");
             moveStopTowardsOtherStop(scenario, "561333", "8005574");
 
         }
