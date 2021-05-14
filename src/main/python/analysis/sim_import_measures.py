@@ -72,7 +72,6 @@ def import_run(run_dir, db_parameter):
     run_name = run_dir.rsplit("/", 1)[1].replace("output-", "")
     logging.info("Start importing run: " + run_name)
 
-
     # -- TRIPS IMPORT --
     trips = run_dir + "/" + run_name + ".output_trips.csv.gz"
     analysis.sim_import.import_trips(trips, db_parameter, run_name)
@@ -93,6 +92,9 @@ def import_run(run_dir, db_parameter):
     person_2_fares = run_dir + "/" + run_name + ".output_person2Fare.csv.gz"
     import_person_2_fares(person_2_fares, db_parameter, run_name)
 
+    # -- PTCOMPARATOR --
+    pt_comparator_results = run_dir + "/" + run_name + ".output_ptComparatorResults.csv.gz"
+    import_pt_comparator_results(pt_comparator_results, db_parameter, run_name)
 
     # TEMP WORKAROUND !!!!!
     # BECAUSE NETWORK2SHAPEWRITER IS NOT WORKING ON MATH CLUSTER
@@ -103,6 +105,71 @@ def import_run(run_dir, db_parameter):
     logging.info("All data successfully imported: " + run_name)
     logging.info("-------------------------------------------")
     logging.info("")
+
+
+def import_pt_comparator_results(pt_comparator_results, db_parameter, run_name):
+    """
+    Person2LinkList Import based off .output_person2PtLinkList.csv.gz
+    """
+
+    logging.info("Append to pt_comparator_results table: " + run_name)
+
+    # -- PRE-CALCULATIONS --
+    df_pt_comparator_results = parse_comparator_results(pt_comparator_results)
+    df_pt_comparator_results['run_name'] = run_name
+
+    # -- IMPORT --
+    table_name = 'pt_comparator_results'
+    table_schema = 'matsim_output'
+
+    DATA_METADATA = {
+        'title': 'PTComparatorResults',
+        'description': 'PTComparatorResults',
+        'source_name': 'Senozon Input',
+        'source_url': 'Nan',
+        'source_year': '2020',
+        'source_download_date': 'Nan',
+    }
+
+    logging.info("Load data to database...")
+    load_df_to_database(
+        df=df_pt_comparator_results,
+        update_mode='append',
+        db_parameter=db_parameter,
+        schema=table_schema,
+        table_name=table_name,
+        meta_data=DATA_METADATA)
+
+    logging.info("Trip table update successful!")
+
+
+def parse_comparator_results(pt_comparator_results):
+    """
+    Function for comparator results list parsing
+    """
+
+    # -- PARSING --
+    types = {'person_id': str,
+             'trip_id': str,
+             'routing_mode': str,
+             'start_time': float,
+             'end_time': float,
+             'trav_time': float,
+             'containsS60': bool,
+             'time_on_s60': str,
+             'is_bike_and_ride': bool,
+             'is_walk': bool,
+             'route_description': str,
+             }
+
+    logging.info("Parse comparator results file...")
+    try:
+        with gzip.open(pt_comparator_results) as f:
+            df_pt_comparator_results = pd.read_csv(f, sep=";", dtype=types)
+    except OSError as e:
+        raise Exception(e.strerror)
+
+    return df_pt_comparator_results
 
 
 def import_person_2_pt_link_list(person_2_pt_link_list, db_parameter, run_name):

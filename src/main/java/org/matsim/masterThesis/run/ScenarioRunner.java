@@ -334,9 +334,8 @@ public class ScenarioRunner {
         ptRevenueAnalyzer.printResults(outputFile);
         parkingAnalyzer.printResults(outputFile);
 
-        // ToDo: Find out how this works...
         // This does not work on math cluster. Network needs to be handled on local machine.
-        Network2Shape.exportNetwork2Shp(controler.getScenario(), outputDir, "epsg:25832", TransformationFactory.getCoordinateTransformation("epsg:25832", "epsg:25832"));
+        // Network2Shape.exportNetwork2Shp(controler.getScenario(), outputDir, "epsg:25832", TransformationFactory.getCoordinateTransformation("epsg:25832", "epsg:25832"));
 
 
         // Do always as last - as config parameters are changed within this analyzer
