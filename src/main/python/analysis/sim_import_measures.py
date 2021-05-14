@@ -57,7 +57,6 @@ def import_run_data(ctx, parent_dir, db_parameter, str_filter):
     for run_dir in dir_contents:
         import_run(parent_dir + "/output-" + run_dir, db_parameter)
 
-
     # -- VIEW UPDATES --
     analysis.sim_import.update_views(db_parameter, sql_dir)
 
@@ -80,6 +79,7 @@ def import_run(run_dir, db_parameter):
     legs = run_dir + "/" + run_name + ".output_legs.csv.gz"
     analysis.sim_import.import_legs(legs, db_parameter, run_name)
 
+    """
     # -- PERSON2PTLINKLIST --
     person_2_pt_link_list = run_dir + "/" + run_name + ".output_person2PtLinkList.csv.gz"
     import_person_2_pt_link_list(person_2_pt_link_list, db_parameter, run_name)
@@ -102,6 +102,7 @@ def import_run(run_dir, db_parameter):
     network = "C:/Users/david/Desktop/tmp/network-shp/" + run_name + ".output_network.shp"
     import_network(network, db_parameter, run_name)
 
+    """
     logging.info("All data successfully imported: " + run_name)
     logging.info("-------------------------------------------")
     logging.info("")
@@ -140,7 +141,7 @@ def import_pt_comparator_results(pt_comparator_results, db_parameter, run_name):
         table_name=table_name,
         meta_data=DATA_METADATA)
 
-    logging.info("Trip table update successful!")
+    logging.info("Comparator table update successful!")
 
 
 def parse_comparator_results(pt_comparator_results):
@@ -169,7 +170,7 @@ def parse_comparator_results(pt_comparator_results):
     except OSError as e:
         raise Exception(e.strerror)
 
-    return df_pt_comparator_results
+    return df_pt_comparator_results[list(types.keys())]
 
 
 def import_person_2_pt_link_list(person_2_pt_link_list, db_parameter, run_name):
@@ -205,7 +206,7 @@ def import_person_2_pt_link_list(person_2_pt_link_list, db_parameter, run_name):
         table_name=table_name,
         meta_data=DATA_METADATA)
 
-    logging.info("Trip table update successful!")
+    logging.info("Person 2 link list table update successful!")
 
 
 def parse_link_list(person_2_pt_link_list):
@@ -234,7 +235,7 @@ def parse_link_list(person_2_pt_link_list):
     except OSError as e:
         raise Exception(e.strerror)
 
-    return df_person_2_pt_link_list
+    return df_person_2_pt_link_list[list(types.keys())]
 
 
 def import_parkings(parkings, db_parameter, run_name):
@@ -301,7 +302,7 @@ def parse_parkings(parkings):
     except OSError as e:
         raise Exception(e.strerror)
 
-    return df_parkings
+    return df_parkings[list(types.keys())]
 
 
 def import_person_2_fares(person_2_fares, db_parameter, run_name):
@@ -309,11 +310,11 @@ def import_person_2_fares(person_2_fares, db_parameter, run_name):
     Person2Fares Import based off .output_person2Fare.csv.gz
     """
 
-    logging.info("Append to person2LinkList table: " + run_name)
+    logging.info("Append to person 2 fares table: " + run_name)
 
     # -- PRE-CALCULATIONS --
-    df_person_2_link_list = parse_link_list(person_2_fares)
-    df_person_2_link_list['run_name'] = run_name
+    df_person_2_fares = parse_person_2_fares(person_2_fares)
+    df_person_2_fares['run_name'] = run_name
 
     # -- IMPORT --
     table_name = 'person_2_fares'
@@ -330,7 +331,7 @@ def import_person_2_fares(person_2_fares, db_parameter, run_name):
 
     logging.info("Load data to database...")
     load_df_to_database(
-        df=df_person_2_link_list,
+        df=df_person_2_fares,
         update_mode='append',
         db_parameter=db_parameter,
         schema=table_schema,
@@ -348,7 +349,7 @@ def parse_person_2_fares(person_2_fares):
     # -- PARSING --
     types = {'personId': str,
              'outOfZones': str,
-             'noZones': int,
+             'noZones': float,
              'fareAmount': float
              }
 
@@ -359,7 +360,7 @@ def parse_person_2_fares(person_2_fares):
     except OSError as e:
         raise Exception(e.strerror)
 
-    return df_person_2_fares
+    return df_person_2_fares[list(types.keys())]
 
 
 def import_network(network, db_parameter, run_name):
