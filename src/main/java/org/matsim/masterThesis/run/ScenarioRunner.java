@@ -174,29 +174,31 @@ public class ScenarioRunner {
         double newTakt = 15*60;
         TransitLine lineS60 = scenario.getTransitSchedule().getTransitLines().get(Id.create("S 60 - 1", TransitLine.class));
 
-        for (var routeIdString: Arrays.asList("1", "2","3")){
-            TransitRoute route = lineS60.getRoutes().get(Id.create(routeIdString, TransitRoute.class));
-            modifier.doubleTakt(route, newTakt);
+        for (int i = 1; i<=3; i++){
+            TransitRoute route = lineS60.getRoutes().get(Id.create(i, TransitRoute.class));
+            modifier.doubleTakt(route, newTakt, 999990000 + i * 100);
         }
 
 
         // Double Takt on bus lines Sindelfingen and Boeblingen
 
         TransitLine line706 = scenario.getTransitSchedule().getTransitLines().get(Id.create("Bus 706 - 8", TransitLine.class));
-        for (var route: line706.getRoutes().values()){
-            modifier.doubleTakt(route, newTakt);
+        for (int i = 1; i<=7; i++){
+            TransitRoute route = line706.getRoutes().get(Id.create(i, TransitRoute.class));
+            modifier.doubleTakt(route, newTakt, 999990400 + i * 20);
         }
+
 
         TransitLine line723 = scenario.getTransitSchedule().getTransitLines().get(Id.create("Bus 723 - 7", TransitLine.class));
         TransitRoute line723route1 = line723.getRoutes().get(Id.create("1", TransitRoute.class));
 
         double start = (7 * 60 * 60) + (20 * 60);
         double end = (11 * 60 * 60);
-        modifier.doubleTakt(line723route1, newTakt, start, end);
+        modifier.doubleTakt(line723route1, newTakt, start, end, 999990600);
 
         start = (12 * 60 * 60);
         end = (20 * 60 * 60);
-        modifier.doubleTakt(line723route1, newTakt, start, end);
+        modifier.doubleTakt(line723route1, newTakt, start, end, 999990700);
 
 
         TransitLine line726 = scenario.getTransitSchedule().getTransitLines().get(Id.create("Bus 726 - 7", TransitLine.class));
@@ -205,21 +207,35 @@ public class ScenarioRunner {
         newTakt = 30*60;
         start = (6 * 60 * 60);
         end = (11 * 60 * 60);
-        modifier.doubleTakt(line726route1, newTakt, start, end);
+        modifier.doubleTakt(line726route1, newTakt, start, end, 999990800);
 
         start = (12 * 60 * 60);
         end = (20 * 60 * 60);
-        modifier.doubleTakt(line726route1, newTakt, start, end);
+        modifier.doubleTakt(line726route1, newTakt, start, end, 999990900);
 
+        newTakt = 15*60;
+        start = (6 * 60 * 60);
+        end = (20 * 60 * 60);
+        modifier.doubleTakt(line726route1, newTakt, start, end, 999991000);
 
         // Double Takt on bus lines in Leinfelden and Echterdingen
-
         TransitLine line38 = scenario.getTransitSchedule().getTransitLines().get(Id.create("Bus 38 - 17", TransitLine.class));
         TransitRoute line38route3 = line38.getRoutes().get(Id.create("3", TransitRoute.class));
         TransitRoute line38route4 = line38.getRoutes().get(Id.create("4", TransitRoute.class));
 
-        modifier.doubleTakt(line38route3, newTakt, start, end);
-        modifier.doubleTakt(line38route4, newTakt, start, end);
+        newTakt = 10*60;
+        start = (6 * 60 * 60);
+        end = (7 * 60 * 60 + 30 * 60);
+        modifier.doubleTakt(line38route3, newTakt, start, end, 999991100);
+
+        newTakt = 15*60;
+        start = (7 * 60 * 60 + 30 * 60);
+        end = (21 * 60 * 60);
+        modifier.doubleTakt(line38route3, newTakt, start, end, 999991200);
+
+        start = (6 * 60 * 60);
+        end = (21 * 60 * 60);
+        modifier.doubleTakt(line38route4, newTakt, start, end, 999991300);
 
 
     }

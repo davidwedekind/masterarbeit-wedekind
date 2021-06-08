@@ -61,13 +61,13 @@ public class TaktModifier {
         TransitLine lineS60 = scenario.getTransitSchedule().getTransitLines().get(Id.create("S 60 - 1", TransitLine.class));
 
         TransitRoute route1 = lineS60.getRoutes().get(Id.create("1", TransitRoute.class));
-        modifier.doubleTakt(route1, newTakt);
+        modifier.doubleTakt(route1, newTakt, 999990100);
 
         TransitRoute route2 = lineS60.getRoutes().get(Id.create("2", TransitRoute.class));
-        modifier.doubleTakt(route2, newTakt);
+        modifier.doubleTakt(route2, newTakt, 999990200);
 
         TransitRoute route3 = lineS60.getRoutes().get(Id.create("3", TransitRoute.class));
-        modifier.doubleTakt(route3, newTakt);
+        modifier.doubleTakt(route3, newTakt, 999990300);
 
         TransitScheduleValidator.ValidationResult resultAfterModifying = TransitScheduleValidator.validateAll(
                 scenario.getTransitSchedule(), scenario.getNetwork());
@@ -83,11 +83,11 @@ public class TaktModifier {
     }
 
 
-    public void doubleTakt(TransitRoute route, double newTakt) {
-        doubleTakt(route, newTakt, 0, 30*60*60);
+    public void doubleTakt(TransitRoute route, double newTakt, int idStarter) {
+        doubleTakt(route, newTakt, 0, 30*60*60, idStarter);
     }
 
-    public void doubleTakt(TransitRoute route, double newTakt, double start, double end) {
+    public void doubleTakt(TransitRoute route, double newTakt, double start, double end, int idStarter) {
         Map<Id<Departure>, Departure> routeDepartures = route.getDepartures();
 
         List<Departure> departuresToAdd = new ArrayList<>();
@@ -96,11 +96,12 @@ public class TaktModifier {
         for (var departure: routeDepartures.values()){
             if (departure.getDepartureTime() >= start && departure.getDepartureTime() <= end){
                 double newDepartureTime = departure.getDepartureTime() + newTakt;
-                Departure newDeparture = tS.getFactory().createDeparture(Id.create(departure.getId().toString() + "-2", Departure.class), newDepartureTime);
-                Id<Vehicle> newVehicleId = Id.createVehicleId(departure.getVehicleId().toString() + "-2");
+                Departure newDeparture = tS.getFactory().createDeparture(Id.create(idStarter, Departure.class), newDepartureTime);
+                Id<Vehicle> newVehicleId = Id.createVehicleId(idStarter);
                 newDeparture.setVehicleId(newVehicleId);
                 departuresToAdd.add(newDeparture);
                 vehiclesToAdd.add(newVehicleId);
+                idStarter++;
             }
 
         }

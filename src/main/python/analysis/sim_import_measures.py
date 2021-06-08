@@ -5,7 +5,7 @@ import logging
 import pandas as pd
 import geopandas as gpd
 from analysis.utils import load_db_parameters,load_df_to_database
-
+import xml.etree.ElementTree as ET
 import analysis.sim_import
 
 sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/measures_views"))
@@ -53,9 +53,11 @@ def import_run_data(ctx, parent_dir, db_parameter, str_filter):
 
     # -- DATA IMPORTS --
     logging.info('The following run(s) will be imported: ' + '[' + ", ".join(dir_contents) + ']')
-
+    """
     for run_dir in dir_contents:
         import_run(parent_dir + "/output-" + run_dir, db_parameter)
+    """
+
 
     # -- VIEW UPDATES --
     analysis.sim_import.update_views(db_parameter, sql_dir)
@@ -78,8 +80,7 @@ def import_run(run_dir, db_parameter):
     # -- LEGS IMPORT --
     legs = run_dir + "/" + run_name + ".output_legs.csv.gz"
     analysis.sim_import.import_legs(legs, db_parameter, run_name)
-
-    """
+    
     # -- PERSON2PTLINKLIST --
     person_2_pt_link_list = run_dir + "/" + run_name + ".output_person2PtLinkList.csv.gz"
     import_person_2_pt_link_list(person_2_pt_link_list, db_parameter, run_name)
@@ -102,7 +103,10 @@ def import_run(run_dir, db_parameter):
     network = "C:/Users/david/Desktop/tmp/network-shp/" + run_name + ".output_network.shp"
     import_network(network, db_parameter, run_name)
 
-    """
+    # -- STOPFACILITIES --
+    stop_facilities = run_dir + "/" + run_name + ".output_transitSchedule.xml.gz"
+    import_stop_facilities(stop_facilities, db_parameter, run_name)
+
     logging.info("All data successfully imported: " + run_name)
     logging.info("-------------------------------------------")
     logging.info("")
@@ -397,6 +401,69 @@ def import_network(network, db_parameter, run_name):
         geom_cols={'geometry': 'LINESTRING'})
 
     logging.info("Network table update successful!")
+
+
+def import_stop_facilities(transit_schedule, db_parameter, run_name):
+    """
+    Transit Stop Facilities Import based off .transitSchedule.xml.gz
+    """
+
+    # -- PRE-CALCULATIONS --
+    logging.info("Read-in transit schedule file...")
+    df_stops = parse_schedule_file(transit_schedule)
+    gdf_stops = gpd.GeoDataFrame(df_stops, geometry=gpd.points_from_xy(df_stops.x, df_stops.y))
+    gdf_stops['run_name'] = run_name
+    gdf_stops.set_crs(crs="epsg:25832", inplace=True)
+
+    # -- IMPORT --
+    table_name = 'stop_facilities'
+    table_schema = 'matsim_output'
+
+    DATA_METADATA = {
+        'title': 'Transit Stop Facilities',
+        'description': 'Transit Stop Facilities',
+        'source_name': 'Senozon Input',
+        'source_url': 'Nan',
+        'source_year': '2020',
+        'source_download_date': 'Nan',
+    }
+
+    logging.info("Load data to database...")
+    load_df_to_database(
+        df=gdf_stops,
+        update_mode='append',
+        db_parameter=db_parameter,
+        schema=table_schema,
+        table_name=table_name,
+        meta_data=DATA_METADATA,
+        geom_cols={'geometry': 'POINT'})
+
+    logging.info("Transit Stop Facilities table update successful!")
+
+
+def parse_schedule_file(transit_schedule):
+    transitStops = list()
+
+    try:
+        with gzip.open(transit_schedule) as f:
+            tree = ET.parse(f)
+            root = tree.getroot()
+
+            for tSF in root.find('./transitStops'):
+                transitStops.append({
+                    "id": tSF.attrib['id'],
+                    "x": tSF.attrib['x'],
+                    "y": tSF.attrib['y'],
+                    "link_ref_id": tSF.attrib['linkRefId'],
+                    "name": tSF.attrib['name'],
+                    "is_blocking": tSF.attrib['isBlocking'],
+                    "vvs_bike_ride": tSF.find('./attributes/attribute[@name="VVSBikeAndRide"]').text
+                })
+
+    except OSError as e:
+        raise Exception(e.strerror)
+
+    return pd.DataFrame(transitStops)
 
 
 if __name__ == '__main__':
