@@ -53,11 +53,9 @@ def import_run_data(ctx, parent_dir, db_parameter, str_filter):
 
     # -- DATA IMPORTS --
     logging.info('The following run(s) will be imported: ' + '[' + ", ".join(dir_contents) + ']')
-    """
+
     for run_dir in dir_contents:
         import_run(parent_dir + "/output-" + run_dir, db_parameter)
-    """
-
 
     # -- VIEW UPDATES --
     analysis.sim_import.update_views(db_parameter, sql_dir)
@@ -107,14 +105,77 @@ def import_run(run_dir, db_parameter):
     stop_facilities = run_dir + "/" + run_name + ".output_transitSchedule.xml.gz"
     import_stop_facilities(stop_facilities, db_parameter, run_name)
 
+    # -- BIKE SPEEDS --
+    config = run_dir + "/" + run_name + ".output_config.xml"
+    import_bike_speed(config, db_parameter, run_name)
+
     logging.info("All data successfully imported: " + run_name)
     logging.info("-------------------------------------------")
     logging.info("")
 
 
+def import_bike_speed(config, db_parameter, run_name):
+    """
+    Bike speed import based off .output_config.xml
+    """
+
+    logging.info("Append to bike speed table: " + run_name)
+
+    # -- PRE-CALCULATIONS --
+    df_bike_speed = parse_bike_speed(config)
+    df_bike_speed['run_name'] = run_name
+
+    # -- IMPORT --
+    table_name = 'bike_speed'
+    table_schema = 'matsim_output'
+
+    DATA_METADATA = {
+        'title': 'Bike Speed',
+        'description': 'Bike Speed',
+        'source_name': 'Senozon Input',
+        'source_url': 'Nan',
+        'source_year': '2020',
+        'source_download_date': 'Nan',
+    }
+
+    logging.info("Load data to database...")
+    load_df_to_database(
+        df=df_bike_speed,
+        update_mode='append',
+        db_parameter=db_parameter,
+        schema=table_schema,
+        table_name=table_name,
+        meta_data=DATA_METADATA)
+
+    logging.info("Bike speed table update successful!")
+
+
+def parse_bike_speed(config):
+    """
+    Function for bike speed parsing
+    """
+
+    tree = ET.parse(config)
+    root = tree.getroot()
+
+    df = list()
+
+    for teleported_mode_param in root.findall(
+            "./module[@name='planscalcroute']/parameterset[@type='teleportedModeParameters']"):
+
+        if not (teleported_mode_param.find("./param[@value='bike']") is None):
+            mode_speed = teleported_mode_param.find("./param[@name='teleportedModeSpeed']")
+            d_factor = teleported_mode_param.find("./param[@name='beelineDistanceFactor']")
+            df.append({'run_name': 'test',
+                       'speed_value': float(mode_speed.attrib.get("value")),
+                       'beeline_dfactor': float(d_factor.attrib.get("value"))})
+
+    return pd.DataFrame(df)
+
+
 def import_pt_comparator_results(pt_comparator_results, db_parameter, run_name):
     """
-    Person2LinkList Import based off .output_person2PtLinkList.csv.gz
+    Pt Comparator Import based off .output_ptComparatorResults.csv.gz
     """
 
     logging.info("Append to pt_comparator_results table: " + run_name)
