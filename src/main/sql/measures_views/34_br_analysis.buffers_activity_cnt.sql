@@ -1,0 +1,14 @@
+-- br_analysis.buffers_activity_cnt
+
+-- Count activities within buffers
+ 
+-- @author dwedekind
+
+SELECT
+	B.RUN_NAME,
+	COUNT(A.ACT_NO) ACT_COUNT
+FROM BR_ANALYSIS.STOP_FEED_BUFFERS B
+INNER JOIN MATSIM_INPUT.AGENT_ACTIVITIES A
+ON ST_WITHIN(A.GEOMETRY, B.SF_BUFFERS)
+GROUP BY RUN_NAME
+ORDER BY RUN_NAME ASC

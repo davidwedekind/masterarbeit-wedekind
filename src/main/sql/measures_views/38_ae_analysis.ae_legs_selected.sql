@@ -1,0 +1,10 @@
+-- ae_analysis.ae_legs_selected_avg
+
+-- @author dwedekind
+
+SELECT
+	RUN_NAME,
+	MODE,
+	AVG(DISTANCE)
+FROM AE_ANALYSIS.AE_LEGS_SELECTED
+GROUP BY RUN_NAME, SE_FOKUS_RELEVANT, MODE

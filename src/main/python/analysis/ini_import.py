@@ -137,7 +137,7 @@ def import_activities(ctx, plans, db_parameter):
 
     activities = pd.DataFrame(activities)
     activities['x'] = activities['x'].apply(float)
-    activities['y'] = activities['x'].apply(float)
+    activities['y'] = activities['y'].apply(float)
 
     activities = gpd.GeoDataFrame(
         activities, geometry=gpd.points_from_xy(activities.x, activities.y))
