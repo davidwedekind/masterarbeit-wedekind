@@ -28,11 +28,10 @@ select
 	pt.trav_time pt_trav_time,
 	bs.beeline_dfactor * trips.euclidean_distance/bs.speed_value::float bike_trav_time
 from matsim_output.sim_trips_enriched trips 
-inner join matsim_output.pt_comparator_results pt
+inner join matsim_output.pt_comparator_results_corrected pt
 on pt.run_name = trips.run_name
 and pt.trip_id = trips.trip_id
 left join matsim_output.bike_speed bs
 on pt.run_name = bs.run_name
 and pt.trip_id = trips.trip_id
 where pt.routing_mode = 'pt_w_bike_allowed'
-LIMIT 100
