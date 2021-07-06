@@ -2,8 +2,8 @@
 
 -- Compare trip stats for each area of agent residency per run
 -- Trip stats are number of trips, mode share, average trip distance and average trip duration
--- Areas are LH Stuttgart, Region Stuttgart, Agents of Boeblingen and Esslingen county
--- and Agents of focus areas in Boeblingen and Esslingen county
+-- Resident groups are LH Stuttgart, Region Stuttgart, residents of Boeblingen and Esslingen county
+-- and residents of focus areas in Boeblingen and Esslingen county
 
 -- @author dwedekind
 
@@ -74,6 +74,36 @@ FOCUS_AREAS AS
 		GROUP BY SIM_TRIPS_ENRICHED.RUN_NAME,
 			SIM_TRIPS_ENRICHED.RES_FOCUS_AREAS),
 			
+			
+-- Aggregate trips for agents living anywhere but having at least one trip on relation Boebl - Essl
+BOEB_ESSL_TRAV AS
+	(SELECT SIM_TRIPS_ENRICHED.RUN_NAME,
+			CASE 
+	 			WHEN SIM_TRIPS_ENRICHED.RES_REL_BOEBL_ESSL = 1 THEN 'Boebl - Essl Reisende'
+	 			ELSE 'Nicht Boebl - Essl Reisende'
+	 		END AS RES_GROUP,
+			COUNT(SIM_TRIPS_ENRICHED.TRIP_ID) AS TRIPS,
+	 		AVG(SIM_TRIPS_ENRICHED.TRAVELED_DISTANCE) AVG_TRIP_DIST,
+	 		AVG(SIM_TRIPS_ENRICHED.TRAV_TIME) AVG_TRIP_DUR
+		FROM MATSIM_OUTPUT.SIM_TRIPS_ENRICHED
+		GROUP BY SIM_TRIPS_ENRICHED.RUN_NAME,
+			SIM_TRIPS_ENRICHED.RES_REL_BOEBL_ESSL),
+			
+			
+-- Aggregate trips for agents living anywhere but having at least one trip on relation between focus areas
+FOCUS_AREAS_TRAV AS
+	(SELECT SIM_TRIPS_ENRICHED.RUN_NAME,
+			CASE 
+	 			WHEN SIM_TRIPS_ENRICHED.RES_REL_FOCUS_AREAS = 1 THEN 'Fokusrelationen Reisende'
+	 			ELSE 'Nicht Fokusrelationen Reisende'
+	 		END AS RES_GROUP,
+			COUNT(SIM_TRIPS_ENRICHED.TRIP_ID) AS TRIPS,
+	 		AVG(SIM_TRIPS_ENRICHED.TRAVELED_DISTANCE) AVG_TRIP_DIST,
+	 		AVG(SIM_TRIPS_ENRICHED.TRAV_TIME) AVG_TRIP_DUR
+		FROM MATSIM_OUTPUT.SIM_TRIPS_ENRICHED
+		GROUP BY SIM_TRIPS_ENRICHED.RUN_NAME,
+			SIM_TRIPS_ENRICHED.RES_REL_FOCUS_AREAS),
+			
 
 -- Union measure groups
 M_GROUPS AS (
@@ -87,6 +117,10 @@ M_GROUPS AS (
 		SELECT * FROM BOEB_ESSL
 		UNION
 		SELECT * FROM FOCUS_AREAS
+		UNION
+		SELECT * FROM BOEB_ESSL_TRAV
+		UNION
+		SELECT * FROM FOCUS_AREAS_TRAV
 	) AS UN
 
 	ORDER BY RUN_NAME, RES_GROUP
@@ -95,13 +129,14 @@ M_GROUPS AS (
 
 -- Build final table
 -- Calculate diffs and changes
+-- Scale trips to 100 pct via scaling factor
 SELECT
 	M.RUN_NAME,
 	M.RES_GROUP,
-	BC.TRIPS TRIPS_BC,
-	M.TRIPS TRIPS_M,
-	(M.TRIPS - BC.TRIPS) AS TRIPS_DIFF,
-	(M.TRIPS - BC.TRIPS)/BC.TRIPS::FLOAT AS TRIPS_CHANGE,
+	BC.TRIPS*{**sfactor**} TRIPS_BC,
+	M.TRIPS*{**sfactor**} TRIPS_M,
+	(M.TRIPS - BC.TRIPS)*{**sfactor**} AS TRIPS_DIFF,
+	(M.TRIPS - BC.TRIPS)/(BC.TRIPS)::FLOAT AS TRIPS_CHANGE,
 	BC.AVG_TRIP_DIST BC_AVG_TRIP_DIST,
 	M.AVG_TRIP_DIST M_AVG_TRIP_DIST,
 	(M.AVG_TRIP_DIST - BC.AVG_TRIP_DIST) AS AVG_TRIP_DIST_DIFF,

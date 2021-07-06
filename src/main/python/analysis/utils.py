@@ -73,7 +73,7 @@ def big_df_size(df):
 
 def import_data_chunks(df, update_mode, table_name, db_engine, schema, geom_data_types=None):
     logging.info('Table size too big --> Importing chunks')
-    df = df.reset_index()
+    df = df.reset_index(drop=True)
     chunks = np.array_split(list(df.index), 100)
 
     if isinstance(df, gpd.geodataframe.GeoDataFrame):

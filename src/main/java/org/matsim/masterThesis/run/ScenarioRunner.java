@@ -2,9 +2,11 @@ package org.matsim.masterThesis.run;
 
 import graphql.AssertException;
 import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
@@ -17,10 +19,7 @@ import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.masterThesis.BanCarsFromSmallerStreets;
-import org.matsim.masterThesis.analyzer.Link2PersonListAnalyzer;
-import org.matsim.masterThesis.analyzer.Network2Shape;
-import org.matsim.masterThesis.analyzer.PTRevenueAnalyzer;
-import org.matsim.masterThesis.analyzer.ParkingAnalyzer;
+import org.matsim.masterThesis.analyzer.*;
 import org.matsim.masterThesis.prep.CleanPopulationAfterCalibration;
 import org.matsim.masterThesis.ptModifiers.*;
 import org.matsim.pt.transitSchedule.api.TransitLine;
@@ -64,9 +63,7 @@ public class ScenarioRunner {
         log.info("START CONFIG PREPARATION (SCENARIO RUNNER)");
 
         // Read all scenario relevant parameters from config input
-        // Include own config group - StuttgartMasterThesisExperimentalConfigGroup
-        Config config = StuttgartMasterThesisRunner.prepareConfig(args, new StuttgartMasterThesisExperimentalConfigGroup());
-
+        Config config = StuttgartMasterThesisRunner.prepareConfig(args);
         // After calibration, ride should be excluded from subtour mode choice
         List<String> modes = new ArrayList<>(Arrays.asList(config.subtourModeChoice().getModes()));
         modes.remove("ride");
@@ -86,8 +83,7 @@ public class ScenarioRunner {
 
         // In addition to the calibration case, master thesis experimental config group is needed
         // for receiving some additional scenario parameters
-        StuttgartMasterThesisExperimentalConfigGroup thesisExpConfigGroup =
-                ConfigUtils.addOrGetModule(config, StuttgartMasterThesisExperimentalConfigGroup.class);
+        StuttgartMasterThesisExperimentalConfigGroup thesisExpConfigGroup = ConfigUtils.addOrGetModule(config, StuttgartMasterThesisExperimentalConfigGroup.class);
 
         Scenario scenario = StuttgartMasterThesisRunner.prepareScenario(config);
 
@@ -108,6 +104,7 @@ public class ScenarioRunner {
 
         if (thesisExpConfigGroup.getS60Extension()){
             new CreateS60Extension().runExtensionModifications(scenario);
+
         }
 
         if (thesisExpConfigGroup.getU6ExtensionShapeFile() != null){
@@ -124,6 +121,21 @@ public class ScenarioRunner {
             alignTakts(scenario);
         }
 
+        if (thesisExpConfigGroup.getConnectionImprovement()) {
+            log.info("Move bus stops towards sbahn stations");
+
+            // Move bus stops towards s-bahn stations for minimal walk times
+            moveStopTowardsOtherStop(scenario, "561562", "8001650");
+            moveStopTowardsOtherStop(scenario, "561573", "8003622");
+            moveStopTowardsOtherStop(scenario, "562223", "8001984");
+            moveStopTowardsOtherStop(scenario, "421958", "8001055");
+            moveStopTowardsOtherStop(scenario, "555742", "8001055");
+            moveStopTowardsOtherStop(scenario, "561333", "8005574");
+
+        }
+
+
+
 
         // Finally include fare Zones and parking shapes according to the scenario
         // and finish the scenario
@@ -138,6 +150,22 @@ public class ScenarioRunner {
         return scenario;
     }
 
+    private static void moveStopTowardsOtherStop(Scenario scenario, String stopGroup1, String stopGroup2) {
+        String node1 = "tr" + stopGroup1;
+        String node2 = "tr" + stopGroup2;
+
+        Coord targetCoord = scenario.getNetwork().getNodes().get(Id.createNodeId(node2)).getCoord();
+
+        // First move network node
+        scenario.getNetwork().getNodes().get(Id.createNodeId(node1)).setCoord(targetCoord);
+
+        // Then move pt facilities
+        scenario.getTransitSchedule().getFacilities().values().stream()
+                .filter(transitStopFacility -> transitStopFacility.getId().toString().startsWith(stopGroup1))
+                .forEach(transitStopFacility -> transitStopFacility.setCoord(targetCoord));
+
+    }
+
 
     private static void alignTakts(Scenario scenario) {
         TaktModifier modifier = new TaktModifier(scenario);
@@ -146,29 +174,31 @@ public class ScenarioRunner {
         double newTakt = 15*60;
         TransitLine lineS60 = scenario.getTransitSchedule().getTransitLines().get(Id.create("S 60 - 1", TransitLine.class));
 
-        for (var routeIdString: Arrays.asList("1", "2","3")){
-            TransitRoute route = lineS60.getRoutes().get(Id.create(routeIdString, TransitRoute.class));
-            modifier.doubleTakt(route, newTakt);
+        for (int i = 1; i<=3; i++){
+            TransitRoute route = lineS60.getRoutes().get(Id.create(i, TransitRoute.class));
+            modifier.doubleTakt(route, newTakt, 999990000 + i * 100);
         }
 
 
         // Double Takt on bus lines Sindelfingen and Boeblingen
 
         TransitLine line706 = scenario.getTransitSchedule().getTransitLines().get(Id.create("Bus 706 - 8", TransitLine.class));
-        for (var route: line706.getRoutes().values()){
-            modifier.doubleTakt(route, newTakt);
+        for (int i = 1; i<=7; i++){
+            TransitRoute route = line706.getRoutes().get(Id.create(i, TransitRoute.class));
+            modifier.doubleTakt(route, newTakt, 999990400 + i * 20);
         }
+
 
         TransitLine line723 = scenario.getTransitSchedule().getTransitLines().get(Id.create("Bus 723 - 7", TransitLine.class));
         TransitRoute line723route1 = line723.getRoutes().get(Id.create("1", TransitRoute.class));
 
         double start = (7 * 60 * 60) + (20 * 60);
         double end = (11 * 60 * 60);
-        modifier.doubleTakt(line723route1, newTakt, start, end);
+        modifier.doubleTakt(line723route1, newTakt, start, end, 999990600);
 
         start = (12 * 60 * 60);
         end = (20 * 60 * 60);
-        modifier.doubleTakt(line723route1, newTakt, start, end);
+        modifier.doubleTakt(line723route1, newTakt, start, end, 999990700);
 
 
         TransitLine line726 = scenario.getTransitSchedule().getTransitLines().get(Id.create("Bus 726 - 7", TransitLine.class));
@@ -177,21 +207,36 @@ public class ScenarioRunner {
         newTakt = 30*60;
         start = (6 * 60 * 60);
         end = (11 * 60 * 60);
-        modifier.doubleTakt(line726route1, newTakt, start, end);
+        modifier.doubleTakt(line726route1, newTakt, start, end, 999990800);
 
         start = (12 * 60 * 60);
         end = (20 * 60 * 60);
-        modifier.doubleTakt(line726route1, newTakt, start, end);
+        modifier.doubleTakt(line726route1, newTakt, start, end, 999990900);
 
+        newTakt = 15*60;
+        start = (6 * 60 * 60);
+        end = (20 * 60 * 60);
+        modifier.doubleTakt(line726route1, newTakt, start, end, 999991000);
 
         // Double Takt on bus lines in Leinfelden and Echterdingen
-
         TransitLine line38 = scenario.getTransitSchedule().getTransitLines().get(Id.create("Bus 38 - 17", TransitLine.class));
         TransitRoute line38route3 = line38.getRoutes().get(Id.create("3", TransitRoute.class));
         TransitRoute line38route4 = line38.getRoutes().get(Id.create("4", TransitRoute.class));
 
-        modifier.doubleTakt(line38route3, newTakt, start, end);
-        modifier.doubleTakt(line38route4, newTakt, start, end);
+        newTakt = 10*60;
+        start = (6 * 60 * 60);
+        end = (7 * 60 * 60 + 30 * 60);
+        modifier.doubleTakt(line38route3, newTakt, start, end, 999991100);
+
+        newTakt = 15*60;
+        start = (7 * 60 * 60 + 30 * 60);
+        end = (21 * 60 * 60);
+        modifier.doubleTakt(line38route3, newTakt, start, end, 999991200);
+
+        start = (6 * 60 * 60);
+        end = (21 * 60 * 60);
+        modifier.doubleTakt(line38route4, newTakt, start, end, 999991300);
+
 
     }
 
@@ -203,7 +248,7 @@ public class ScenarioRunner {
         final Config config = scenario.getConfig();
 
         StuttgartMasterThesisExperimentalConfigGroup thesisExpConfigGroup =
-                ConfigUtils.addOrGetModule(config, StuttgartMasterThesisExperimentalConfigGroup.class);
+                (StuttgartMasterThesisExperimentalConfigGroup) config.getModules().get(StuttgartMasterThesisExperimentalConfigGroup.GROUP_NAME);
 
         // Validate transit schedule
         TransitScheduleValidator.ValidationResult resultAfterModifying = TransitScheduleValidator.validateAll(
@@ -224,7 +269,8 @@ public class ScenarioRunner {
         // Bike and Ride
         log.info("BIKE AND RIDE");
         log.info("Bike Teleported Mode Speed [m/s]: " + config.plansCalcRoute().getModeRoutingParams().get(TransportMode.bike).getTeleportedModeSpeed().toString());
-        IntermodalTripFareCompensatorsConfigGroup compensatorsCfg = ConfigUtils.addOrGetModule(config, IntermodalTripFareCompensatorsConfigGroup.GROUP_NAME, IntermodalTripFareCompensatorsConfigGroup.class);
+        IntermodalTripFareCompensatorsConfigGroup compensatorsCfg =
+                (IntermodalTripFareCompensatorsConfigGroup) config.getModules().get(IntermodalTripFareCompensatorsConfigGroup.GROUP_NAME);
 
         OptionalDouble optionalTripCompensation = compensatorsCfg.getIntermodalTripFareCompensatorConfigGroups().stream()
                 .filter(var1 -> var1.getDrtModesAsString().equals(TransportMode.bike))
@@ -243,7 +289,8 @@ public class ScenarioRunner {
         log.info("Fare Zone prices ... ");
 
 
-        PtFaresConfigGroup configFares = ConfigUtils.addOrGetModule(config, PtFaresConfigGroup.GROUP, PtFaresConfigGroup.class);
+        PtFaresConfigGroup configFares =
+                (PtFaresConfigGroup) config.getModules().get(PtFaresConfigGroup.GROUP);
 
         Map<Integer, Double> allFares = configFares.getFaresGroup().getFaresAsMap();
         for (Map.Entry<Integer, Double> fare: allFares.entrySet()){
@@ -305,6 +352,13 @@ public class ScenarioRunner {
 
         // This does not work on math cluster. Network needs to be handled on local machine.
         // Network2Shape.exportNetwork2Shp(controler.getScenario(), outputDir, "epsg:25832", TransformationFactory.getCoordinateTransformation("epsg:25832", "epsg:25832"));
+
+
+        // Do always as last - as config parameters are changed within this analyzer
+        PTComparisonAnalyzer comparisonAnalyzer = new PTComparisonAnalyzer(controler.getScenario());
+        comparisonAnalyzer.calculatePTRouteOptions(controler);
+        comparisonAnalyzer.printResults(outputFile);
+
 
         log.info("FINISH POST-PROCESSING");
         log.info("------------");

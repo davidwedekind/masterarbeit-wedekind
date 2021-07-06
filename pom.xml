@@ -58,16 +58,19 @@
             <version>${matsim.version}</version>
         </dependency>
 
-        <dependency>
+        <!--dependency>
             <groupId>ch.sbb</groupId>
             <artifactId>matsim-sbb-extensions</artifactId>
             <version>12.11</version>
-        </dependency>
+        </dependency-->
 
         <dependency>
-            <groupId>com.github.matsim-scenarios</groupId>
+            <!--groupId>com.github.matsim-scenarios</groupId>
             <artifactId>matsim-stuttgart</artifactId>
-            <version>a229d30599</version>
+            <version>359475fb69</version-->
+            <groupId>org.matsim</groupId>
+            <artifactId>matsim-stuttgart</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -135,10 +138,10 @@
 
     <repositories>
 
-        <repository>
+        <!--repository>
             <id>SBB</id>
             <url>https://schweizerischebundesbahnen.bintray.com/simba.mvn</url>
-        </repository>
+        </repository-->
 
         <repository>
             <!-- Geotools is not on Maven central -->

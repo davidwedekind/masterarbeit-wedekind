@@ -1,4 +1,4 @@
--- basic_analysis.trips_by_mode_rel
+-- basic_analysis.trips_by_rel
 
 -- Compare trip stats for each trip relation per run and mode
 -- Trip stats are number of trips, mode share, average trip distance and average trip duration
@@ -12,7 +12,7 @@ WITH BOEB_ESSL AS
 			CASE 
 	 			WHEN SIM_TRIPS_ENRICHED.REL_BOEBL_ESSL = 1 THEN 'LK Boeb - LK Essl'
 	 			ELSE 'Außer LK Boeb - LK Essl'
-	 		END AS RES_GROUP,
+	 		END AS REL_GROUP,
 			COUNT(SIM_TRIPS_ENRICHED.TRIP_ID) AS TRIPS,
 			AVG(SIM_TRIPS_ENRICHED.TRAVELED_DISTANCE) AVG_TRIP_DIST,
 	 		AVG(SIM_TRIPS_ENRICHED.TRAV_TIME) AVG_TRIP_DUR
@@ -27,7 +27,7 @@ FOCUS_AREAS AS
 			CASE 
 	 			WHEN SIM_TRIPS_ENRICHED.REL_FOCUS_AREAS = 1 THEN 'Fokusrelationen'
 	 			ELSE 'Außer Fokusrelationen'
-	 		END AS RES_GROUP,
+	 		END AS REL_GROUP,
 			COUNT(SIM_TRIPS_ENRICHED.TRIP_ID) AS TRIPS,
 			AVG(SIM_TRIPS_ENRICHED.TRAVELED_DISTANCE) AVG_TRIP_DIST,
 	 		AVG(SIM_TRIPS_ENRICHED.TRAV_TIME) AVG_TRIP_DUR
@@ -44,18 +44,19 @@ M_GROUPS AS (
 		SELECT * FROM FOCUS_AREAS
 	) AS UN
 
-	ORDER BY RUN_NAME, RES_GROUP
+	ORDER BY RUN_NAME, REL_GROUP
 )
 
 
 -- Build final table
 -- Calculate diffs and changes
+-- Scale trips to 100 pct via scaling factor
 SELECT
 	M.RUN_NAME,
-	M.RES_GROUP,
-	BC.TRIPS TRIPS_BC,
-	M.TRIPS TRIPS_M,
-	(M.TRIPS - BC.TRIPS) AS TRIPS_DIFF,
+	M.REL_GROUP,
+	BC.TRIPS*{**sfactor**} TRIPS_BC,
+	M.TRIPS*{**sfactor**} TRIPS_M,
+	(M.TRIPS - BC.TRIPS)*{**sfactor**} AS TRIPS_DIFF,
 	(M.TRIPS - BC.TRIPS)/BC.TRIPS::FLOAT AS TRIPS_CHANGE,
 	BC.AVG_TRIP_DIST BC_AVG_TRIP_DIST,
 	M.AVG_TRIP_DIST M_AVG_TRIP_DIST,
@@ -68,5 +69,5 @@ SELECT
 	
 FROM M_GROUPS M
 LEFT JOIN M_GROUPS BC
-ON BC.RES_GROUP = M.RES_GROUP
+ON BC.REL_GROUP = M.REL_GROUP
 WHERE BC.RUN_NAME = 'bc'

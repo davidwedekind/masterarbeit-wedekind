@@ -6,14 +6,15 @@ import org.matsim.core.config.ReflectiveConfigGroup;
  */
 
 public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConfigGroup {
-    private static final String GROUP_NAME = "stuttgartMasterThesisExperimental";
+    public static final String GROUP_NAME = "stuttgartMasterThesisExperimental";
     private static final String PARKING_ZONE_SHAPE_FILE = "parkingZoneShapeFile";
     private static final String FARE_ZONE_SHAPE_FILE = "fareZoneShapeFile";
     private static final String REDUCED_CAR_INFRASTRUCTURE_ZONES_SHAPE_FILE = "reducedCarInfrastructureZonesShapeFile";
     private static final String U6_EXTENSION_SHAPEFILE = "u6ExtensionShapeFile";
     private static final String S60_EXTENSION = "s60Extension";
     private static final String SUPERSHUTTLE_EXTENSION = "supershuttleExtension";
-    private static final String TAKT_ALIGNMENT = "flughafenConnectionAlignment";
+    private static final String TAKT_ALIGNMENT = "taktAlignment";
+    private static final String CONNECTION_IMPROVEMENT = "connectionImprovement";
 
     private String parkingZoneShapeFile = "parkingZones_bc.shp";
     private String fareZoneShapeFile = "fareZones_bc.shp";
@@ -22,6 +23,7 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
     private boolean s60Extension = false;
     private boolean supershuttleExtension = false;
     private boolean taktAlignment = false;
+    private boolean connectionImprovement = false;
 
 
     public StuttgartMasterThesisExperimentalConfigGroup(){
@@ -120,6 +122,24 @@ public class StuttgartMasterThesisExperimentalConfigGroup extends ReflectiveConf
 
     public void setTaktAlignment(boolean taktAlignment) {
         this.taktAlignment = taktAlignment;
+    }
+
+    @StringGetter(CONNECTION_IMPROVEMENT)
+    public String getConnectionImprovementAsString() {
+        return String.valueOf(getConnectionImprovement());
+    }
+
+    public boolean getConnectionImprovement() {
+        return connectionImprovement;
+    }
+
+    @StringSetter(CONNECTION_IMPROVEMENT)
+    public void setConnectionImprovement(String connectionImprovement) {
+        setConnectionImprovement(Boolean.parseBoolean(connectionImprovement));
+    }
+
+    public void setConnectionImprovement(boolean connectionImprovement) {
+        this.connectionImprovement = connectionImprovement;
     }
 
 }

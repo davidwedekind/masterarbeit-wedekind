@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 import geopandas as gpd
 import click
@@ -13,6 +14,7 @@ from shapely.geometry.point import Point
 from analysis.utils import load_df_to_database, load_db_parameters, drop_table_if_exists, run_sql_script
 
 sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql/calibration_views"))
+
 
 @click.group()
 def cli():
@@ -90,6 +92,84 @@ def import_agents(ctx, plans, db_parameter):
     query = sql_dir + '/../agents_enriched_mview.sql'
     run_sql_script(SQL_FILE_PATH=query, db_parameter=db_parameter)
     logging.info("Successful mview creation!")
+
+
+@cli.command()
+@click.option('--plans', type=str, default='', help='plans path')
+@click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
+@click.pass_context
+def import_activities(ctx, plans, db_parameter):
+    """
+    HOME LOCATIONS
+    This is the function which can be executed for extracting the agents activities from the plans file.
+
+    ---------
+    Execution:
+    python ini_import import-activities
+    --plans [plan file path]
+    --db_parameter [path of db parameter json]
+    ---------
+
+    """
+
+    # -- PRE-CALCULATIONS --
+    logging.info("Read plans file...")
+    plans = matsim.plan_reader(plans, selectedPlansOnly=True)
+
+    activities = list()
+
+    time = lambda act, key: act.attrib[key] if key in act.attrib else np.nan
+    for person, plan in plans:
+
+        acts = list(filter(lambda e: e.tag == 'activity',
+                           plan))
+
+        for x in range(len(acts)):
+            activities.append({
+                'person_id': person.attrib['id'],
+                'act_no': x + 1,
+                'act_type': acts[x].attrib['type'],
+                'start_time': time(acts[x], 'start_time'),
+                'end_time': time(acts[x], 'end_time'),
+                'x': acts[x].attrib['x'],
+                'y': acts[x].attrib['y']
+            })
+
+    activities = pd.DataFrame(activities)
+    activities['x'] = activities['x'].apply(float)
+    activities['y'] = activities['y'].apply(float)
+
+    activities = gpd.GeoDataFrame(
+        activities, geometry=gpd.points_from_xy(activities.x, activities.y))
+
+    activities = activities.set_crs(25832)
+
+    # -- IMPORT --
+    table_name = 'agent_activities'
+    table_schema = 'matsim_input'
+    db_parameter = load_db_parameters(db_parameter)
+    drop_table_if_exists(db_parameter, table_name, table_schema)
+
+    DATA_METADATA = {
+        'title': 'Agent Activities',
+        'description': 'Table of agents activities',
+        'source_name': 'Senozon Input',
+        'source_url': 'Nan',
+        'source_year': '2020',
+        'source_download_date': 'Nan',
+    }
+
+    logging.info("Load data to database...")
+    load_df_to_database(
+        df=activities,
+        update_mode='replace',
+        db_parameter=db_parameter,
+        schema=table_schema,
+        table_name=table_name,
+        meta_data=DATA_METADATA,
+        geom_cols={'geometry': 'POINT'})
+
+    logging.info("Activities import successful!")
 
 
 @cli.command()
@@ -272,8 +352,10 @@ def import_calib(ctx, calib, db_parameter):
     # -- PRE-CALCULATIONS --
     logging.info("Read-in excel file...")
     tables = dict()
-    tables['mid_trip_stats_by_mode_distance_stuttgart'] = pd.read_excel(calib, sheet_name='01a_Klassen_Tidy', engine='openpyxl')
-    tables['mid_trip_stats_by_distance_stuttgart'] = pd.read_excel(calib, sheet_name='01b_Klassen_Tidy', engine='openpyxl')
+    tables['mid_trip_stats_by_mode_distance_stuttgart'] = pd.read_excel(calib, sheet_name='01a_Klassen_Tidy',
+                                                                        engine='openpyxl')
+    tables['mid_trip_stats_by_distance_stuttgart'] = pd.read_excel(calib, sheet_name='01b_Klassen_Tidy',
+                                                                   engine='openpyxl')
     tables['mid_other_param'] = pd.read_excel(calib, sheet_name='02_Wege_Tidy', engine='openpyxl')
     tables['mid_trip_stats_multiple_level'] = pd.read_excel(calib, sheet_name='03_ModalSplit_Tidy', engine='openpyxl')
     tables['mid_user_segments'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente_Tidy', engine='openpyxl')
@@ -291,7 +373,7 @@ def import_calib(ctx, calib, db_parameter):
         'source_url': 'https://vm.baden-wuerttemberg.de/fileadmin/redaktion/m-mvi/intern/Dateien/PDF/MID2017_Stadt_Stuttgart.pdf',
         'source_year': '2018',
         'source_download_date': '2020-11-20'
-    },  'mid_trip_stats_by_distance_stuttgart': {
+    }, 'mid_trip_stats_by_distance_stuttgart': {
         'title': 'Modal-Split nach Distanzklassen für die Landeshaupstadt Stuttgart',
         'description': 'Tabelle A W12 Wegelänge - Stadt Stuttgart',
         'source_name': 'Tabellarische Grundausertung Stadt Stuttgart. MID 2017',
@@ -374,7 +456,8 @@ def import_plausibility_data(ctx, plausibility, db_parameter):
     # -- PRE-CALCULATIONS --
     logging.info("Read-in excel file...")
     tables = dict()
-    tables['mid_plausi_trip_calc'] = pd.read_excel(plausibility, sheet_name='03b_AbsoluteNoTrips', dtype={'ags': str}, engine='openpyxl')
+    tables['mid_plausi_trip_calc'] = pd.read_excel(plausibility, sheet_name='03b_AbsoluteNoTrips', dtype={'ags': str},
+                                                   engine='openpyxl')
 
     for df in tables.values():
         df.columns = df.columns.map(str.lower)
@@ -539,7 +622,7 @@ def create_mviews_func(sfactor, sql_dir, db_parameter):
     queries = os.listdir(sql_dir)
     queries.sort()
     db_parameter = load_db_parameters(db_parameter)
-    dct = {'**sfactor**': float(100)/float(sfactor)}
+    dct = {'**sfactor**': float(100) / float(sfactor)}
 
     logging.info("Create materialized views: " + str(len(queries)))
 
@@ -615,7 +698,7 @@ def generate_hexagon_df(gdf_shape, res):
     gdf['geometry'] = gdf['h3_id'].apply(lambda x: Polygon(h3.h3_to_geo_boundary(h=x)))
     gdf['center'] = gdf['h3_id'].apply(lambda x: Point(h3.h3_to_geo(h=x)))
     gdf = gpd.GeoDataFrame(gdf.drop(columns=['geometry']),
-                             geometry=gdf['geometry'])
+                           geometry=gdf['geometry'])
     gdf = gdf.set_crs(epsg=4326)
     gdf = gdf.to_crs(epsg=25832)
     return gdf
